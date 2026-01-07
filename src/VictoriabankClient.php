@@ -121,6 +121,19 @@ class VictoriabankClient extends GuzzleClient
     }
 
     /**
+     * Merchant order ID (6-32 characters)
+     */
+    public static function normalizeOrderId($order_id)
+    {
+        return sprintf('%06s', $order_id);
+    }
+
+    public static function deNormalizeOrderId($order_id)
+    {
+        return ltrim($order_id, '0');
+    }
+
+    /**
      * Merchant transaction timestamp in GMT: YYYYMMDDHHMMSS.
      */
     protected function getTimestamp()
@@ -154,11 +167,88 @@ class VictoriabankClient extends GuzzleClient
         return bin2hex($bytes);
     }
 
+    protected const MERCHANT_PSIGN_PARAMS = ['ORDER', 'NONCE', 'TIMESTAMP', 'TRTYPE', 'AMOUNT'];
+    protected const GATEWAY_PSIGN_PARAMS = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
+
     /**
      * Merchant MAC in hexadecimal form.
      */
-    public static function generatePSign(string $order, string $nonce, string $timestamp, string $tr_type, float $amount)
+    public function generatePSign(array $params, array $psign_params, string $private_key)
     {
+        $mac = self::generateMac($params, $psign_params);
+        $private_key_resource = openssl_pkey_get_private($private_key);
 
+        switch ($this->psign_algo) {
+            case self::P_SIGN_HASH_ALGO_MD5:
+                $signature = self::createSignatureMD5($mac, $private_key_resource);
+                break;
+            case self::P_SIGN_HASH_ALGO_SHA256:
+                $signature = self::createSignatureSHA256($mac, $private_key_resource);
+                break;
+            default:
+                throw new \Exception('Failed to generate transaction signature: Unknown P_SIGN hashing algorithm');
+        }
+
+        if (PHP_VERSION_ID < 80000) {
+            openssl_free_key($private_key_resource);
+        }
+
+        $pSign = strtoupper(bin2hex($signature));
+        return $pSign;
+    }
+
+    public function validatePSign(array $params, array $psign_params, string $public_key)
+    {
+    }
+
+    protected static function generateMac(array $params, array $psign_params)
+    {
+        // Format: {length1}{value1}{length2}{value2}...
+
+        $mac = '';
+        foreach ($psign_params as $key) {
+            // Strict check for null/empty string to allow "0"
+            $val = (isset($params[$key]) && $params[$key] !== '')
+                ? (string)$params[$key]
+                : '';
+
+            if ($val !== '') {
+                $mac .= strlen($val) . $val;
+            } else {
+                $mac .= '-';
+            }
+        }
+        return $mac;
+    }
+
+    /**
+     * e-Commerce Gateway merchant interface (CGI/WWW forms version)
+     * Appendix A: P_SIGN creation/verification in the Merchant System
+     *
+     * This prefix is required for the e-Gateway to recognize the MD5 hash
+     */
+    protected const VB_SIGNATURE_PREFIX  = '003020300C06082A864886F70D020505000410';
+
+    protected static function createSignatureMD5(string $mac, $private_key_resource)
+    {
+        $mac_hash = md5($mac);
+        $signed_data = hex2bin(self::VB_SIGNATURE_PREFIX . $mac_hash);
+
+
+        // RSA Private Encryption with PKCS#1 padding
+        // The specification describes manual padding, but openssl_private_encrypt
+        // handles this automatically with the OPENSSL_PKCS1_PADDING flag.
+        $signature = '';
+        openssl_private_encrypt($signed_data, $signature, $private_key_resource, OPENSSL_PKCS1_PADDING);
+
+        return $signature;
+    }
+
+    protected static function createSignatureSHA256(string $mac, $private_key_resource)
+    {
+        $signature = '';
+        openssl_sign($mac, $signature, $private_key_resource, OPENSSL_ALGO_SHA256);
+
+        return $signature;
     }
 }
