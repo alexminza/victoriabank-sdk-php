@@ -1,2 +1,1 @@
-# victoriabank-sdk-php
-PHP SDK for Victoriabank API
+# PHP SDK for Victoriabank API
