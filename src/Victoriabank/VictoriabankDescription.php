@@ -51,7 +51,7 @@ class VictoriabankDescription extends Description
                 'authorize' => [
                     'extends' => 'baseOp',
                     'httpMethod' => 'POST',
-                    'uri' => '/',
+                    'uri' => '',
                     'summary' => 'Authorize payment',
                     'responseModel' => 'AuthorizationResponse',
                     'parameters' => [
@@ -61,7 +61,7 @@ class VictoriabankDescription extends Description
                 'complete' => [
                     'extends' => 'baseOp',
                     'httpMethod' => 'POST',
-                    'uri' => '/',
+                    'uri' => '',
                     'summary' => 'Complete authorized transaction',
                     'responseModel' => 'AuthorizationResponse',
                     'parameters' => [
@@ -71,7 +71,7 @@ class VictoriabankDescription extends Description
                 'reverse' => [
                     'extends' => 'baseOp',
                     'httpMethod' => 'POST',
-                    'uri' => '/',
+                    'uri' => '',
                     'summary' => 'Reverse authorized or completed transaction',
                     'responseModel' => 'TransactionResponse',
                     'parameters' => [

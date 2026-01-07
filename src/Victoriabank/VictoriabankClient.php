@@ -38,6 +38,21 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
+    protected $back_ref;
+
+    /**
+     * @var string
+     */
+    protected $lang;
+
+    /**
+     * @var string
+     */
+    protected $country;
+
+    /**
+     * @var string
+     */
     protected $merchant_private_key;
 
     /**
@@ -83,6 +98,30 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
+    public function setBackRef(string $back_ref)
+    {
+        $this->back_ref = $back_ref;
+        return $this;
+    }
+
+    public function setLang(string $lang)
+    {
+        $this->lang = $lang;
+        return $this;
+    }
+
+    public function setCountry(string $country)
+    {
+        $this->country = $country;
+        return $this;
+    }
+
+    public function setTimezone(string $timezone)
+    {
+        $this->timezone = new \DateTimeZone($timezone);
+        return $this;
+    }
+
     public function setMerchantPrivateKey(string $merchant_private_key)
     {
         $this->merchant_private_key = $merchant_private_key;
@@ -109,13 +148,14 @@ class VictoriabankClient extends GuzzleClient
     {
         $args = $authorize_data;
         $args['TRTYPE'] = self::TRTYPE_AUTHORIZATION;
-        
-        [
-            'grant_type' => $grant_type,
-            'username' => $username,
-            'password' => $password,
-            'refresh_token' => $refresh_token
-        ];
+        $args['MERCH_GMT'] = $this->getTimezoneOffset();
+        $args['TIMESTAMP'] = self::getTimestamp();
+        $args['NONCE'] = self::generateNonce();
+        $args['BACKREF'] = $this->back_ref;
+        $args['LANG'] = $this->lang;
+        $args['COUNTRY'] = $this->country;
+
+        $args['P_SIGN'] = $this->generatePSign($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
 
         return parent::authorize($args);
     }
@@ -136,7 +176,7 @@ class VictoriabankClient extends GuzzleClient
     /**
      * Merchant transaction timestamp in GMT: YYYYMMDDHHMMSS.
      */
-    protected function getTimestamp()
+    protected static function getTimestamp()
     {
         // Format the date as YYYYMMDDHHMMSS
         return gmdate('YmdHis');
@@ -170,9 +210,8 @@ class VictoriabankClient extends GuzzleClient
     protected const MERCHANT_PSIGN_PARAMS = ['ORDER', 'NONCE', 'TIMESTAMP', 'TRTYPE', 'AMOUNT'];
     protected const GATEWAY_PSIGN_PARAMS = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
 
-    /**
-     * Merchant MAC in hexadecimal form.
-     */
+
+    //region PSIGN
     public function generatePSign(array $params, array $psign_params, string $private_key)
     {
         $mac = self::generateMac($params, $psign_params);
@@ -251,4 +290,5 @@ class VictoriabankClient extends GuzzleClient
 
         return $signature;
     }
+    //endregion
 }

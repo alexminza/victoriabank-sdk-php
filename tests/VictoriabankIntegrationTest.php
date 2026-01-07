@@ -25,8 +25,11 @@ class VictoriabankIntegrationTest extends TestCase
     protected static $baseUrl;
 
     // Shared state
-    protected static $trans_id;
     protected static $authorize_data;
+
+    protected static $trans_id;
+    protected static $rrn;
+    protected static $int_ref;
 
     /**
      * @var VictoriabankClient
@@ -48,7 +51,7 @@ class VictoriabankIntegrationTest extends TestCase
 
         self::$baseUrl = VictoriabankClient::TEST_BASE_URL;
 
-        if (empty(self::$username) || empty(self::$password) || empty(self::$iban) || empty(self::$publicKey)) {
+        if (empty(self::$merchant_id) || empty(self::$terminal_id) || empty(self::$merchant_private_key) || empty(self::$bank_public_key) || empty(self::$psign_algo)) {
             self::markTestSkipped('Integration test credentials not provided.');
         }
     }
@@ -79,6 +82,9 @@ class VictoriabankIntegrationTest extends TestCase
         $this->client
             ->setMerchantId(self::$merchant_id)
             ->setTerminalId(self::$terminal_id)
+            ->setBackRef('https://example.com/backref')
+            ->setLang('ro')
+            ->setTimezone('Europe/Chisinau')
             ->setMerchantPrivateKey(self::$merchant_private_key)
             ->setBankPublicKey(self::$bank_public_key)
             ->setPSignAlgo(self::$psign_algo);
@@ -125,14 +131,6 @@ class VictoriabankIntegrationTest extends TestCase
             'TERMINAL' => self::$terminal_id,
             'EMAIL' => 'example@example.com',
             'MERCH_ADDRESS' => self::$merchant_address,
-
-            // 'COUNTRY' => 'MD',
-            'MERCH_GMT' => date('Z') / 3600, // https://stackoverflow.com/questions/193499/utc-offset-in-php
-            'TIMESTAMP' => VictoriabankClient::getTimestamp(),
-            'NONCE' => VictoriabankClient::generateNonce(),
-            'BACKREF' => 'https://example.com/backref',
-            'P_SIGN' => '',
-            'LANG' => 'ro',
         ];
 
         $response = $this->client->authorize($authorize_data);
@@ -150,70 +148,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertEquals($authorize_data['AMOUNT'], $response['AMOUNT']);
         $this->assertEquals($authorize_data['CURRENCY'], $response['CURRENCY']);
 
-        self::$qrHeaderUUID = $response['qrHeaderUUID'];
-        self::$qrExtensionUUID = $response['qrExtensionUUID'];
-        self::$authorize_data = $authorize_data;
-    }
-
-    /**
-     * @depends testAuthorize
-     */
-    public function testComplete()
-    {
-        $hybridData = [
-            'header' => [
-                'qrType' => 'HYBR',
-                'amountType' => 'Fixed',
-                'pmtContext' => 'e'
-            ],
-            'extension' => [
-                'creditorAccount' => [
-                    'iban' => self::$iban
-                ],
-                'amount' => [
-                    'sum' => 15.00,
-                    'currency' => 'MDL'
-                ],
-                'dba' => 'Test Hybrid Merchant',
-                'remittanceInfo4Payer' => 'Hybrid Order #H1',
-                'creditorRef' => 'H1',
-                'ttl' => [
-                    'length' => 60,
-                    'units' => 'mm'
-                ]
-            ]
-        ];
-
-        $response = $this->client->createPayeeQr($hybridData, self::$accessToken);
-        // $this->debugLog('createPayeeQr', $response);
-
-        $this->assertNotEmpty($response);
-        $this->assertArrayHasKey('qrHeaderUUID', $response);
-        $this->assertArrayHasKey('qrExtensionUUID', $response);
-        $this->assertArrayHasKey('qrAsText', $response);
-        $this->assertNotEmpty($response['qrHeaderUUID']);
-        $this->assertNotEmpty($response['qrExtensionUUID']);
-        $this->assertNotEmpty($response['qrAsText']);
-
-        self::$hybridQrHeaderUUID = $response['qrHeaderUUID'];
-        self::$hybridQrExtensionUUID = $response['qrExtensionUUID'];
-        self::$hybridQrData = $hybridData;
-    }
-
-    /**
-     * @depends testAuthorize
-     */
-    public function testReverse()
-    {
-        $qrToCancelResponse = $this->client->createPayeeQr(self::$qrData, self::$accessToken);
-        $this->assertNotEmpty($qrToCancelResponse);
-        $this->assertArrayHasKey('qrHeaderUUID', $qrToCancelResponse);
-        $this->assertNotEmpty($qrToCancelResponse['qrHeaderUUID']);
-
-        $response = $this->client->cancelPayeeQr($qrToCancelResponse['qrHeaderUUID'], self::$accessToken);
-        // $this->debugLog('cancelPayeeQr', $response);
-
-        $this->assertNotNull($response);
-        $this->assertEmpty($response);
+        self::$rrn = $response['RRN'];
+        self::$int_ref = $response['INT_REF '];
     }
 }
