@@ -14,13 +14,14 @@ class VictoriabankIntegrationTest extends TestCase
     protected static $terminal_id;
     protected static $merchant_id;
 
+    protected static $merchant_private_key;
+    protected static $bank_public_key;
+    protected static $signature_algo;
+
     protected static $merchant_name;
     protected static $merchant_url;
     protected static $merchant_address;
-
-    protected static $merchant_private_key;
-    protected static $bank_public_key;
-    protected static $psign_algo;
+    protected static $backref_url;
 
     protected static $baseUrl;
 
@@ -41,17 +42,18 @@ class VictoriabankIntegrationTest extends TestCase
         self::$merchant_id = getenv('VICTORIABANK_MERCHANT_ID');
         self::$terminal_id = getenv('VICTORIABANK_TERMINAL_ID');
 
+        self::$merchant_private_key = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY');
+        self::$bank_public_key      = getenv('VICTORIABANK_BANK_PUBLIC_KEY');
+        self::$signature_algo       = getenv('VICTORIABANK_SIGNATURE_ALGO');
+
         self::$merchant_name    = getenv('VICTORIABANK_MERCHANT_NAME');
         self::$merchant_url     = getenv('VICTORIABANK_MERCHANT_URL');
         self::$merchant_address = getenv('VICTORIABANK_MERCHANT_ADDRESS');
-
-        self::$merchant_private_key = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY');
-        self::$bank_public_key      = getenv('VICTORIABANK_BANK_PUBLIC_KEY');
-        self::$psign_algo           = getenv('VICTORIABANK_PSIGN_ALGO');
+        self::$backref_url      = getenv('VICTORIABANK_BACKREF_URL');
 
         self::$baseUrl = VictoriabankClient::TEST_BASE_URL;
 
-        if (empty(self::$merchant_id) || empty(self::$terminal_id) || empty(self::$merchant_private_key) || empty(self::$bank_public_key) || empty(self::$psign_algo)) {
+        if (empty(self::$merchant_id) || empty(self::$terminal_id) || empty(self::$merchant_private_key) || empty(self::$bank_public_key) || empty(self::$signature_algo)) {
             self::markTestSkipped('Integration test credentials not provided.');
         }
     }
@@ -82,12 +84,12 @@ class VictoriabankIntegrationTest extends TestCase
         $this->client
             ->setMerchantId(self::$merchant_id)
             ->setTerminalId(self::$terminal_id)
-            ->setBackRef('https://example.com/backref')
             ->setLang('ro')
             ->setTimezone('Europe/Chisinau')
             ->setMerchantPrivateKey(self::$merchant_private_key)
             ->setBankPublicKey(self::$bank_public_key)
-            ->setPSignAlgo(self::$psign_algo);
+            ->setSignatureAlgo(self::$signature_algo)
+            ->setBackRefUrl(self::$backref_url);
     }
 
     protected function onNotSuccessfulTest(\Throwable $t): void
@@ -127,28 +129,15 @@ class VictoriabankIntegrationTest extends TestCase
             'DESC' => 'Order #123',
             'MERCH_NAME' => self::$merchant_name,
             'MERCH_URL' => self::$merchant_url,
-            'MERCHANT' => self::$merchant_id,
-            'TERMINAL' => self::$terminal_id,
             'EMAIL' => 'example@example.com',
             'MERCH_ADDRESS' => self::$merchant_address,
         ];
 
-        $response = $this->client->authorize($authorize_data);
-        // $this->debugLog('authorize', $response);
+        $authorize_request = $this->client->generateAuthorizeRequest($authorize_data);
+        $this->debugLog('generateAuthorizeRequest', $authorize_request);
 
-        $this->assertNotEmpty($response);
-        $this->assertArrayHasKey('TERMINAL', $response);
-        $this->assertArrayHasKey('TRTYPE', $response);
-        $this->assertArrayHasKey('ORDER', $response);
-        $this->assertArrayHasKey('AMOUNT', $response);
-        $this->assertArrayHasKey('CURRENCY', $response);
-        $this->assertEquals($authorize_data['TERMINAL'], $response['TERMINAL']);
-        $this->assertEquals($authorize_data['TRTYPE'], $response['TRTYPE']);
-        $this->assertEquals($authorize_data['ORDER'], $response['ORDER']);
-        $this->assertEquals($authorize_data['AMOUNT'], $response['AMOUNT']);
-        $this->assertEquals($authorize_data['CURRENCY'], $response['CURRENCY']);
-
-        self::$rrn = $response['RRN'];
-        self::$int_ref = $response['INT_REF '];
+        $this->assertIsArray($authorize_request);
+        $this->assertNotEmpty($authorize_request);
+        // file_put_contents('./tests/test.html', $html);
     }
 }

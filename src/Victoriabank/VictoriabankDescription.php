@@ -7,6 +7,7 @@ use Composer\InstalledVersions;
 
 /**
  * Victoriabank API service description
+ *
  * @link https://ecomt.victoriabank.md/cardop/images/instruction-ecom-vb.zip
  */
 class VictoriabankDescription extends Description
@@ -53,7 +54,7 @@ class VictoriabankDescription extends Description
                     'httpMethod' => 'POST',
                     'uri' => '',
                     'summary' => 'Authorize payment',
-                    'responseModel' => 'AuthorizationResponse',
+                    'responseModel' => 'getRawResponse', // AuthorizationResponse
                     'parameters' => [
                         'schema' => ['$ref' => 'AuthorizationRequest']
                     ],
@@ -150,7 +151,7 @@ class VictoriabankDescription extends Description
                             'type' => 'string',
                             'location' => 'formParam',
                             'required' => true,
-                            'description' => 'Merchant primary web site URL',
+                            'description' => 'Merchant primary web site URL in format http://www.merchantsitename.domain',
                             'minLength' => 1,
                             'maxLength' => 250,
                         ],

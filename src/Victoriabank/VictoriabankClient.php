@@ -10,6 +10,7 @@ use GuzzleHttp\Command\Result;
 
 /**
  * Victoriabank client
+ *
  * @link https://ecomt.victoriabank.md/cardop/images/instruction-ecom-vb.zip
  */
 class VictoriabankClient extends GuzzleClient
@@ -38,7 +39,7 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
-    protected $back_ref;
+    protected $backref_url;
 
     /**
      * @var string
@@ -63,7 +64,7 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
-    protected $psign_algo = self::P_SIGN_HASH_ALGO_SHA256;
+    protected $signature_algo = self::P_SIGN_HASH_ALGO_SHA256;
 
     /**
      * @var \DateTimeZone
@@ -98,12 +99,6 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
-    public function setBackRef(string $back_ref)
-    {
-        $this->back_ref = $back_ref;
-        return $this;
-    }
-
     public function setLang(string $lang)
     {
         $this->lang = $lang;
@@ -134,32 +129,44 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
-    public function setPSignAlgo(string $psign_algo)
+    public function setSignatureAlgo(string $signature_algo)
     {
-        $this->psign_algo = $psign_algo;
+        $this->signature_algo = $signature_algo;
+        return $this;
+    }
+
+    public function setBackRefUrl(string $backref_url)
+    {
+        $this->backref_url = $backref_url;
         return $this;
     }
     //endregion
 
+    //region Operations
     /**
      * Authorize payment
      */
-    public function authorize(array $authorize_data): Result
+    public function generateAuthorizeRequest(array $authorize_data)
     {
         $args = $authorize_data;
         $args['TRTYPE'] = self::TRTYPE_AUTHORIZATION;
         $args['MERCH_GMT'] = $this->getTimezoneOffset();
         $args['TIMESTAMP'] = self::getTimestamp();
         $args['NONCE'] = self::generateNonce();
-        $args['BACKREF'] = $this->back_ref;
+
+        $args['MERCHANT'] = $this->merchant_id;
+        $args['TERMINAL'] = $this->terminal_id;
+        $args['BACKREF'] = $this->backref_url;
         $args['LANG'] = $this->lang;
         $args['COUNTRY'] = $this->country;
 
-        $args['P_SIGN'] = $this->generatePSign($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
+        $args['P_SIGN'] = $this->generateSignature($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
 
-        return parent::authorize($args);
+        return $args;
     }
+    //endregion
 
+    //region Utility
     /**
      * Merchant order ID (6-32 characters)
      */
@@ -190,7 +197,7 @@ class VictoriabankClient extends GuzzleClient
         $hours = $now->getOffset() / 3600;
         $offset = ($hours >= 0)
             ? "+$hours"
-            : (string)$hours;
+            : (string) $hours;
 
         return $offset;
     }
@@ -206,37 +213,37 @@ class VictoriabankClient extends GuzzleClient
         // Convert to hexadecimal format
         return bin2hex($bytes);
     }
-
-    protected const MERCHANT_PSIGN_PARAMS = ['ORDER', 'NONCE', 'TIMESTAMP', 'TRTYPE', 'AMOUNT'];
-    protected const GATEWAY_PSIGN_PARAMS = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
-
+    //endregion
 
     //region PSIGN
-    public function generatePSign(array $params, array $psign_params, string $private_key)
+    protected const MERCHANT_PSIGN_PARAMS = ['ORDER', 'NONCE', 'TIMESTAMP', 'TRTYPE', 'AMOUNT'];
+    protected const GATEWAY_PSIGN_PARAMS  = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
+
+    public function generateSignature(array $params, array $psign_params, string $private_key)
     {
         $mac = self::generateMac($params, $psign_params);
         $private_key_resource = openssl_pkey_get_private($private_key);
 
-        switch ($this->psign_algo) {
+        switch ($this->signature_algo) {
             case self::P_SIGN_HASH_ALGO_MD5:
-                $signature = self::createSignatureMD5($mac, $private_key_resource);
+                $signature = self::createSignatureMd5($mac, $private_key_resource);
                 break;
             case self::P_SIGN_HASH_ALGO_SHA256:
-                $signature = self::createSignatureSHA256($mac, $private_key_resource);
+                $signature = self::createSignatureSha256($mac, $private_key_resource);
                 break;
             default:
-                throw new \Exception('Failed to generate transaction signature: Unknown P_SIGN hashing algorithm');
+                throw new \Exception('Failed to generate transaction signature: Unknown P_SIGN hashing algorithm.');
         }
 
         if (PHP_VERSION_ID < 80000) {
+            // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP_VERSION_ID check performed before invocation.
             openssl_free_key($private_key_resource);
         }
 
-        $pSign = strtoupper(bin2hex($signature));
-        return $pSign;
+        return strtoupper(bin2hex($signature));
     }
 
-    public function validatePSign(array $params, array $psign_params, string $public_key)
+    public function validateSignature(array $params, array $psign_params, string $public_key)
     {
     }
 
@@ -248,7 +255,7 @@ class VictoriabankClient extends GuzzleClient
         foreach ($psign_params as $key) {
             // Strict check for null/empty string to allow "0"
             $val = (isset($params[$key]) && $params[$key] !== '')
-                ? (string)$params[$key]
+                ? (string) $params[$key]
                 : '';
 
             if ($val !== '') {
@@ -257,22 +264,22 @@ class VictoriabankClient extends GuzzleClient
                 $mac .= '-';
             }
         }
+
         return $mac;
     }
 
     /**
-     * e-Commerce Gateway merchant interface (CGI/WWW forms version)
+     * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
      * Appendix A: P_SIGN creation/verification in the Merchant System
      *
      * This prefix is required for the e-Gateway to recognize the MD5 hash
      */
-    protected const VB_SIGNATURE_PREFIX  = '003020300C06082A864886F70D020505000410';
+    protected const VB_SIGNATURE_PREFIX = '003020300C06082A864886F70D020505000410';
 
-    protected static function createSignatureMD5(string $mac, $private_key_resource)
+    protected static function createSignatureMd5(string $mac, $private_key_resource)
     {
         $mac_hash = md5($mac);
         $signed_data = hex2bin(self::VB_SIGNATURE_PREFIX . $mac_hash);
-
 
         // RSA Private Encryption with PKCS#1 padding
         // The specification describes manual padding, but openssl_private_encrypt
@@ -283,7 +290,7 @@ class VictoriabankClient extends GuzzleClient
         return $signature;
     }
 
-    protected static function createSignatureSHA256(string $mac, $private_key_resource)
+    protected static function createSignatureSha256(string $mac, $private_key_resource)
     {
         $signature = '';
         openssl_sign($mac, $signature, $private_key_resource, OPENSSL_ALGO_SHA256);
