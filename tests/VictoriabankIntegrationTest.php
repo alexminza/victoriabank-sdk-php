@@ -122,11 +122,12 @@ class VictoriabankIntegrationTest extends TestCase
 
     public function testAuthorize()
     {
+        $order_id = 123;
         $authorize_data = [
             'AMOUNT' => '10.00',
             'CURRENCY' => 'MDL',
-            'ORDER' => '000123',
-            'DESC' => 'Order #123',
+            'ORDER' => VictoriabankClient::normalizeOrderId($order_id),
+            'DESC' => "Order #$$order_id",
             'MERCH_NAME' => self::$merchant_name,
             'MERCH_URL' => self::$merchant_url,
             'EMAIL' => 'example@example.com',
@@ -141,5 +142,24 @@ class VictoriabankIntegrationTest extends TestCase
 
         $html = $this->client->generateHtmlForm(self::$baseUrl, $authorize_request);
         file_put_contents('./tests/test.html', $html);
+    }
+
+    public function testCheck()
+    {
+        $order_id = 123;
+        $check_data = [
+            'TRAN_TRTYPE' => VictoriabankClient::TRTYPE_AUTHORIZATION,
+            'ORDER' => VictoriabankClient::normalizeOrderId($order_id),
+        ];
+
+        $check_response = $this->client->check($check_data);
+        $this->debugLog('check', $check_response);
+
+        $this->assertNotEmpty($check_response);
+        $this->assertArrayHasKey('body', $check_response);
+        $this->assertNotEmpty($check_response['body']);
+
+        $html = $check_response['body'];
+        file_put_contents('./tests/test2.html', $html);
     }
 }

@@ -23,9 +23,13 @@ class VictoriabankClient extends GuzzleClient
     public const TRTYPE_AUTHORIZATION = '0';
     public const TRTYPE_SALES_COMPLETION = '21';
     public const TRTYPE_REVERSAL = '24';
+    public const TRTYPE_CHECK = '90';
 
     public const P_SIGN_HASH_ALGO_MD5    = 'md5';
     public const P_SIGN_HASH_ALGO_SHA256 = 'sha256';
+
+    public const DEFAULT_COUNTRY = 'md';
+    public const DEFAULT_LANG = 'en';
 
     //region Config
     /**
@@ -46,12 +50,12 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
-    protected $lang;
+    protected $lang = self::DEFAULT_LANG;
 
     /**
      * @var string
      */
-    protected $country;
+    protected $country = self::DEFAULT_COUNTRY;
 
     /**
      * @var string
@@ -184,6 +188,15 @@ class VictoriabankClient extends GuzzleClient
 
         return parent::reverse($args);
     }
+
+    public function check(array $check_data)
+    {
+        $args = $check_data;
+        $args['TRTYPE'] = self::TRTYPE_CHECK;
+        $args['TERMINAL'] = $this->terminal_id;
+
+        return parent::check($args);
+    }
     //endregion
 
     //region Utility
@@ -263,7 +276,7 @@ class VictoriabankClient extends GuzzleClient
      *
      * @return string The generated HTML form.
      */
-    public static function generateHtmlForm(string $action, array $args, string $form_id = null, bool $auto_submit = true)
+    public static function generateHtmlForm(string $action, array $args, ?string $form_id = null, bool $auto_submit = true)
     {
         if (empty($form_id)) {
             $form_id = uniqid('form-');

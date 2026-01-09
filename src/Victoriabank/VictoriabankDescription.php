@@ -34,16 +34,45 @@ class VictoriabankDescription extends Description
         $version = self::detectVersion();
         $userAgent = "victoriabank-sdk-php/$version";
 
-        $transactionParams = [
+        $orderParam = [
+            'ORDER' => [
+                'type' => 'string',
+                'location' => 'formParam',
+                'required' => true,
+                'description' => 'Merchant order ID',
+                'minLength' => 6,
+                'maxLength' => 32,
+            ],
+        ];
+
+        $amountParams = [
+            'AMOUNT' => [
+                'type' => 'string',
+                'location' => 'formParam',
+                'required' => true,
+                'description' => 'Order total amount in float format with decimal point separator',
+                'minLength' => 1,
+                'maxLength' => 12,
+            ],
+            'CURRENCY' => [
+                'type' => 'string',
+                'location' => 'formParam',
+                'required' => true,
+                'description' => 'Order currency: 3-character currency code',
+                'pattern' => '/^[A-Z]{3}$/',
+                'minLength' => 3,
+                'maxLength' => 3,
+            ],
+        ];
+
+        $terminalTrTypeParams = [
             'TRTYPE' => [
                 'type' => 'string',
                 'location' => 'formParam',
                 'required' => true,
                 'description' => 'Transaction type',
-                'enum' => ['0'],
-                'default' => '0',
                 'minLength' => 1,
-                'maxLength' => 1,
+                'maxLength' => 2,
             ],
             'TERMINAL' => [
                 'type' => 'string',
@@ -54,6 +83,20 @@ class VictoriabankDescription extends Description
                 'minLength' => 8,
                 'maxLength' => 8,
             ],
+        ];
+
+        $tranTrTypeParam = [
+            'TRAN_TRTYPE' => [
+                'type' => 'string',
+                'location' => 'formParam',
+                'required' => true,
+                'description' => 'Checked transaction type',
+                'minLength' => 1,
+                'maxLength' => 2,
+            ],
+        ];
+
+        $transactionSignParams = [
             'TIMESTAMP' => [
                 'type' => 'string',
                 'location' => 'formParam',
@@ -78,34 +121,6 @@ class VictoriabankDescription extends Description
                 'description' => 'Merchant MAC in hexadecimal form.',
                 'minLength' => 1,
                 'maxLength' => 512,
-            ],
-        ];
-
-        $orderParams = [
-            'ORDER' => [
-                'type' => 'string',
-                'location' => 'formParam',
-                'required' => true,
-                'description' => 'Merchant order ID',
-                'minLength' => 6,
-                'maxLength' => 32,
-            ],
-            'AMOUNT' => [
-                'type' => 'string',
-                'location' => 'formParam',
-                'required' => true,
-                'description' => 'Order total amount in float format with decimal point separator',
-                'minLength' => 1,
-                'maxLength' => 12,
-            ],
-            'CURRENCY' => [
-                'type' => 'string',
-                'location' => 'formParam',
-                'required' => true,
-                'description' => 'Order currency: 3-character currency code',
-                'pattern' => '/^[A-Z]{3}$/',
-                'minLength' => 3,
-                'maxLength' => 3,
             ],
         ];
 
@@ -162,7 +177,8 @@ class VictoriabankDescription extends Description
                 'location' => 'formParam',
                 'required' => false,
                 'description' => 'Merchant shop 2-character country code. Must be provided if merchant system is located in a country other than the gateway server\'s country.',
-                'pattern' => '/^[A-Z]{2}$/',
+                'default' => VictoriabankClient::DEFAULT_COUNTRY,
+                'pattern' => '/^[A-Z]{2}$/i',
                 'minLength' => 2,
                 'maxLength' => 2,
             ],
@@ -188,7 +204,7 @@ class VictoriabankDescription extends Description
                 'required' => false,
                 'description' => 'Transaction forms language. By default are available forms in en, ro, ru. If need forms in another languages please contact gateway administrator.',
                 'enum' => ['en', 'ro', 'ru'],
-                'default' => 'en',
+                'default' => VictoriabankClient::DEFAULT_LANG,
                 'minLength' => 2,
                 'maxLength' => 2,
             ],
@@ -212,8 +228,12 @@ class VictoriabankDescription extends Description
             ],
         ];
 
-        $authorizeParameters = array_merge($orderParams, $authorizeOrderParams, $transactionParams);
-        $completeParameters = array_merge($orderParams, $transactionReferenceParams, $transactionParams);
+        $orderValueParams = array_merge($orderParam, $amountParams);
+        $transactionParams = array_merge($terminalTrTypeParams, $transactionSignParams);
+
+        $authorizeParameters = array_merge($orderValueParams, $authorizeOrderParams, $transactionParams);
+        $completeParameters = array_merge($orderValueParams, $transactionReferenceParams, $transactionParams);
+        $checkParameters = array_merge($terminalTrTypeParams, $tranTrTypeParam, $orderParam);
 
         $description = [
             // 'baseUrl' => 'https://vb059.vb.md/cgi-bin/cgi_link',
@@ -253,6 +273,14 @@ class VictoriabankDescription extends Description
                     'summary' => 'Reverse authorized or completed transaction',
                     'responseModel' => 'TransactionResponse',
                     'parameters' => $completeParameters,
+                ],
+                'check' => [
+                    'extends' => 'baseOp',
+                    'httpMethod' => 'POST',
+                    'uri' => '',
+                    'summary' => 'Check transaction status',
+                    'responseModel' => 'getRawResponse', // 'TransactionResponse',
+                    'parameters' => $checkParameters,
                 ],
             ],
 
