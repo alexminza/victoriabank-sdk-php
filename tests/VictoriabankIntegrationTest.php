@@ -123,7 +123,7 @@ class VictoriabankIntegrationTest extends TestCase
     public function testAuthorize()
     {
         $order_id = 123;
-        $authorize_data = [
+        self::$authorize_data = [
             'AMOUNT' => '10.00',
             'CURRENCY' => 'MDL',
             'ORDER' => VictoriabankClient::normalizeOrderId($order_id),
@@ -134,7 +134,7 @@ class VictoriabankIntegrationTest extends TestCase
             'MERCH_ADDRESS' => self::$merchant_address,
         ];
 
-        $authorize_request = $this->client->generateAuthorizeRequest($authorize_data);
+        $authorize_request = $this->client->generateAuthorizeRequest(self::$authorize_data);
         $this->debugLog('generateAuthorizeRequest', $authorize_request);
 
         $this->assertIsArray($authorize_request);
@@ -142,6 +142,34 @@ class VictoriabankIntegrationTest extends TestCase
 
         $html = $this->client->generateHtmlForm(self::$baseUrl, $authorize_request);
         file_put_contents('./tests/test.html', $html);
+    }
+
+    /**
+     * @depends testAuthorize
+     */
+    public function testComplete()
+    {
+        $complete_data = [
+            'ORDER' => self::$authorize_data['ORDER'],
+            'AMOUNT' => self::$authorize_data['AMOUNT'],
+            'CURRENCY' => self::$authorize_data['CURRENCY'],
+            'RRN' => null,
+            'INT_REF' => null,
+        ];
+
+        $complete_response = $this->client->complete($complete_data);
+        $this->debugLog('complete', $complete_response);
+
+        $this->assertIsArray($complete_response);
+        $this->assertNotEmpty($complete_response);
+    }
+
+    /**
+     * @depends testComplete
+     */
+    public function testReverse()
+    {
+
     }
 
     public function testCheck()
