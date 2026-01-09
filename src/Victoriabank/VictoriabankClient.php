@@ -253,18 +253,37 @@ class VictoriabankClient extends GuzzleClient
         return bin2hex($bytes);
     }
 
+    /**
+     * Generates an HTML form that automatically submits to the bank's payment gateway.
+     *
+     * @param string $action The URL to which the form will be submitted.
+     * @param array $args The parameters to be sent in the form as hidden inputs.
+     * @param string|null $form_id The ID of the form. If null, a unique ID will be generated.
+     * @param bool $auto_submit Whether the form should be automatically submitted via JavaScript.
+     *
+     * @return string The generated HTML form.
+     */
     public static function generateHtmlForm(string $action, array $args, string $form_id = null, bool $auto_submit = true)
     {
         if (empty($form_id)) {
             $form_id = uniqid('form-');
         }
 
+        $form_id = htmlspecialchars($form_id, ENT_QUOTES);
         $submit_id = "$form_id-submit";
-        $html = "<form id='$form_id' name='$form_id' method='POST' action='$action'>\n";
+        $attr_action = htmlspecialchars($action, ENT_QUOTES);
+
+        $html = "<form id='$form_id' name='$form_id' method='POST' action='$attr_action'>\n";
         foreach ($args as $name => $value) {
-            $html .= "\t<input type='hidden' name='$name' value='$value' />\n";
+            $attr_name = htmlspecialchars($name, ENT_QUOTES);
+            $attr_value = htmlspecialchars($value, ENT_QUOTES);
+            $html .= "\t<input type='hidden' name='$attr_name' value='$attr_value' />\n";
         }
-        $html .= "\t<input type='submit' id='$submit_id' name='$submit_id' />\n";
+
+        if (!$auto_submit) {
+            $html .= "\t<input type='submit' id='$submit_id' name='$submit_id' />\n";
+        }
+
         $html .= "</form>\n";
 
         if ($auto_submit) {
