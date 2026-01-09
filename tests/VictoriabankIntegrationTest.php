@@ -27,6 +27,7 @@ class VictoriabankIntegrationTest extends TestCase
 
     // Shared state
     protected static $authorize_data;
+    protected static $complete_data;
 
     protected static $trans_id;
     protected static $rrn;
@@ -149,7 +150,7 @@ class VictoriabankIntegrationTest extends TestCase
      */
     public function testComplete()
     {
-        $complete_data = [
+        self::$complete_data = [
             'ORDER' => self::$authorize_data['ORDER'],
             'AMOUNT' => self::$authorize_data['AMOUNT'],
             'CURRENCY' => self::$authorize_data['CURRENCY'],
@@ -157,7 +158,7 @@ class VictoriabankIntegrationTest extends TestCase
             'INT_REF' => null,
         ];
 
-        $complete_response = $this->client->complete($complete_data);
+        $complete_response = $this->client->complete(self::$complete_data);
         $this->debugLog('complete', $complete_response);
 
         $this->assertIsArray($complete_response);
@@ -169,9 +170,18 @@ class VictoriabankIntegrationTest extends TestCase
      */
     public function testReverse()
     {
+        $reverse_data = self::$complete_data;
 
+        $reverse_response = $this->client->reverse($reverse_data);
+        $this->debugLog('complete', $reverse_response);
+
+        $this->assertIsArray($reverse_response);
+        $this->assertNotEmpty($reverse_response);
     }
 
+    /**
+     * @depends testAuthorize
+     */
     public function testCheck()
     {
         $order_id = 123;
