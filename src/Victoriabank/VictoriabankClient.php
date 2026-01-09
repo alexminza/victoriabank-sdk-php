@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Command\Guzzle\DescriptionInterface;
 use GuzzleHttp\Command\Guzzle\GuzzleClient;
+use GuzzleHttp\Command\Guzzle\Handler\ValidatedDescriptionHandler;
 use GuzzleHttp\Command\Result;
 
 /**
@@ -162,7 +163,16 @@ class VictoriabankClient extends GuzzleClient
 
         $args['P_SIGN'] = $this->generateSignature($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
 
-        // return parent::authorize($args);
+        $operation_name = 'authorize';
+        $description = $this->getDescription();
+        // $operation = $description->getOperation($operation_name);
+        $command = $this->getCommand($operation_name, $args);
+
+        $validationHandler = new ValidatedDescriptionHandler($description);
+        $validator = $validationHandler(function () {
+        });
+        $validator($command, null);
+
         return $args;
     }
     //endregion
