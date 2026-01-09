@@ -163,21 +163,22 @@ class VictoriabankClient extends GuzzleClient
 
         $args['P_SIGN'] = $this->generateSignature($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
 
-        $operation_name = 'authorize';
-        $description = $this->getDescription();
-        // $operation = $description->getOperation($operation_name);
-        $command = $this->getCommand($operation_name, $args);
-
-        $validationHandler = new ValidatedDescriptionHandler($description);
-        $validator = $validationHandler(function () {
-        });
-        $validator($command, null);
-
+        $this->validateOperationArgs('authorize', $args);
         return $args;
     }
     //endregion
 
     //region Utility
+    protected function validateOperationArgs(string $name, array $args)
+    {
+        $command = $this->getCommand($name, $args);
+        $command->getHandlerStack()->setHandler(function () {
+            return new Result();
+        });
+
+        $this->execute($command);
+    }
+
     /**
      * Merchant order ID (6-32 characters)
      */
