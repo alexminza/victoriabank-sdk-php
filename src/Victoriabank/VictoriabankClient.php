@@ -8,6 +8,7 @@ use GuzzleHttp\Command\Guzzle\DescriptionInterface;
 use GuzzleHttp\Command\Guzzle\GuzzleClient;
 use GuzzleHttp\Command\Guzzle\Handler\ValidatedDescriptionHandler;
 use GuzzleHttp\Command\Result;
+use GuzzleHttp\Promise\FulfilledPromise;
 
 /**
  * Victoriabank client
@@ -151,29 +152,55 @@ class VictoriabankClient extends GuzzleClient
     {
         $args = $authorize_data;
         $args['TRTYPE'] = self::TRTYPE_AUTHORIZATION;
-        $args['MERCH_GMT'] = $this->getTimezoneOffset();
-        $args['TIMESTAMP'] = self::getTimestamp();
-        $args['NONCE'] = self::generateNonce();
 
+        $args['MERCH_GMT'] = $this->getTimezoneOffset();
         $args['MERCHANT'] = $this->merchant_id;
-        $args['TERMINAL'] = $this->terminal_id;
         $args['BACKREF'] = $this->backref_url;
         $args['LANG'] = $this->lang;
         $args['COUNTRY'] = $this->country;
 
-        $args['P_SIGN'] = $this->generateSignature($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
-
+        $this->setTransactionParams($args);
         $this->validateOperationArgs('authorize', $args);
+
         return $args;
+    }
+
+    public function complete(array $complete_data)
+    {
+        $args = $complete_data;
+        $args['TRTYPE'] = self::TRTYPE_SALES_COMPLETION;
+
+        $this->setTransactionParams($args);
+
+        return parent::complete($args);
+    }
+
+    public function reverse(array $reverse_data)
+    {
+        $args = $reverse_data;
+        $args['TRTYPE'] = self::TRTYPE_REVERSAL;
+
+        $this->setTransactionParams($args);
+
+        return parent::reverse($args);
     }
     //endregion
 
     //region Utility
+    protected function setTransactionParams(array &$args)
+    {
+        $args['TERMINAL'] = $this->terminal_id;
+        $args['TIMESTAMP'] = self::getTimestamp();
+        $args['NONCE'] = self::generateNonce();
+
+        $args['P_SIGN'] = $this->generateSignature($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
+    }
+
     protected function validateOperationArgs(string $name, array $args)
     {
         $command = $this->getCommand($name, $args);
         $command->getHandlerStack()->setHandler(function () {
-            return new Result();
+            return new FulfilledPromise(new Result());
         });
 
         $this->execute($command);
@@ -225,6 +252,27 @@ class VictoriabankClient extends GuzzleClient
         // Convert to hexadecimal format
         return bin2hex($bytes);
     }
+
+    public static function generateHtmlForm(string $action, array $args, string $form_id = null, bool $auto_submit = true)
+    {
+        if (empty($form_id)) {
+            $form_id = uniqid('form-');
+        }
+
+        $submit_id = "$form_id-submit";
+        $html = "<form id='$form_id' name='$form_id' method='POST' action='$action'>\n";
+        foreach ($args as $name => $value) {
+            $html .= "\t<input type='hidden' name='$name' value='$value' />\n";
+        }
+        $html .= "\t<input type='submit' id='$submit_id' name='$submit_id' />\n";
+        $html .= "</form>\n";
+
+        if ($auto_submit) {
+            $html .= "<script type='text/javascript'>document.getElementById('$form_id').submit();</script>\n";
+        }
+
+        return $html;
+    }
     //endregion
 
     //region PSIGN
@@ -255,9 +303,7 @@ class VictoriabankClient extends GuzzleClient
         return strtoupper(bin2hex($signature));
     }
 
-    public function validateSignature(array $params, array $psign_params, string $public_key)
-    {
-    }
+    public function validateSignature(array $params, array $psign_params, string $public_key) {}
 
     protected static function generateMac(array $params, array $psign_params)
     {
