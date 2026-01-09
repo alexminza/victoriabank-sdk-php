@@ -162,6 +162,7 @@ class VictoriabankClient extends GuzzleClient
 
         $args['P_SIGN'] = $this->generateSignature($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
 
+        // return parent::authorize($args);
         return $args;
     }
     //endregion

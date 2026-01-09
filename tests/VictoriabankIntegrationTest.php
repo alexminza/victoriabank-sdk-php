@@ -138,6 +138,7 @@ class VictoriabankIntegrationTest extends TestCase
 
         $this->assertIsArray($authorize_request);
         $this->assertNotEmpty($authorize_request);
+
         // file_put_contents('./tests/test.html', $html);
     }
 }
