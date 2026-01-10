@@ -336,7 +336,11 @@ class VictoriabankClient extends GuzzleClient
     public function generateSignature(array $params)
     {
         $mac = self::generateMac($params, self::MERCHANT_PSIGN_PARAMS);
+
         $private_key_resource = openssl_pkey_get_private($this->merchant_private_key, $this->merchant_private_key_passphrase);
+        if ($private_key_resource === false) {
+            throw new \Exception('Invalid private key or passphrase');
+        }
 
         switch ($this->signature_algo) {
             case self::P_SIGN_HASH_ALGO_MD5:
@@ -366,6 +370,9 @@ class VictoriabankClient extends GuzzleClient
         $signature_bin = hex2bin($params['P_SIGN']);
 
         $public_key_resource = openssl_pkey_get_public($this->bank_public_key);
+        if ($public_key_resource === false) {
+            throw new \Exception('Invalid public key.');
+        }
 
         switch ($this->signature_algo) {
             case self::P_SIGN_HASH_ALGO_MD5:
