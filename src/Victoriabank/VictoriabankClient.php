@@ -65,6 +65,11 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
+    protected $merchant_private_key_passphrase;
+
+    /**
+     * @var string
+     */
     protected $bank_public_key;
 
     /**
@@ -123,9 +128,10 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
-    public function setMerchantPrivateKey(string $merchant_private_key)
+    public function setMerchantPrivateKey(string $merchant_private_key, ?string $merchant_private_key_passphrase = null)
     {
         $this->merchant_private_key = $merchant_private_key;
+        $this->merchant_private_key_passphrase = $merchant_private_key_passphrase;
         return $this;
     }
 
@@ -206,7 +212,7 @@ class VictoriabankClient extends GuzzleClient
         $args['TIMESTAMP'] = self::getTimestamp();
         $args['NONCE'] = self::generateNonce();
 
-        $args['P_SIGN'] = $this->generateSignature($args, self::MERCHANT_PSIGN_PARAMS, $this->merchant_private_key);
+        $args['P_SIGN'] = $this->generateSignature($args);
     }
 
     protected function validateOperationArgs(string $name, array $args)
@@ -312,10 +318,10 @@ class VictoriabankClient extends GuzzleClient
     protected const MERCHANT_PSIGN_PARAMS = ['ORDER', 'NONCE', 'TIMESTAMP', 'TRTYPE', 'AMOUNT'];
     protected const GATEWAY_PSIGN_PARAMS  = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
 
-    public function generateSignature(array $params, array $psign_params, string $private_key)
+    public function generateSignature(array $params)
     {
-        $mac = self::generateMac($params, $psign_params);
-        $private_key_resource = openssl_pkey_get_private($private_key);
+        $mac = self::generateMac($params, self::MERCHANT_PSIGN_PARAMS);
+        $private_key_resource = openssl_pkey_get_private($this->merchant_private_key, $this->merchant_private_key_passphrase);
 
         switch ($this->signature_algo) {
             case self::P_SIGN_HASH_ALGO_MD5:
@@ -336,12 +342,12 @@ class VictoriabankClient extends GuzzleClient
         return strtoupper(bin2hex($signature));
     }
 
-    public function validateSignature(array $params, string $public_key)
+    public function validateSignature(array $params)
     {
         $mac = self::generateMac($params, self::GATEWAY_PSIGN_PARAMS);
         $signature_bin = hex2bin($params['P_SIGN']);
 
-        $public_key_resource = openssl_pkey_get_public($public_key);
+        $public_key_resource = openssl_pkey_get_public($this->bank_public_key);
 
         switch ($this->signature_algo) {
             case self::P_SIGN_HASH_ALGO_MD5:

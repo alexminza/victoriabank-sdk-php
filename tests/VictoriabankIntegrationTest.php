@@ -15,6 +15,7 @@ class VictoriabankIntegrationTest extends TestCase
     protected static $merchant_id;
 
     protected static $merchant_private_key;
+    protected static $merchant_private_key_passphrase;
     protected static $merchant_public_key;
     protected static $bank_public_key;
     protected static $signature_algo;
@@ -44,6 +45,7 @@ class VictoriabankIntegrationTest extends TestCase
         self::$terminal_id = getenv('VICTORIABANK_TERMINAL_ID');
 
         self::$merchant_private_key = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY');
+        self::$merchant_private_key_passphrase = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY_PASSPHRASE');
         self::$merchant_public_key  = getenv('VICTORIABANK_MERCHANT_PUBLIC_KEY');
         self::$bank_public_key      = getenv('VICTORIABANK_BANK_PUBLIC_KEY');
         self::$signature_algo       = getenv('VICTORIABANK_SIGNATURE_ALGO');
@@ -95,7 +97,7 @@ class VictoriabankIntegrationTest extends TestCase
             ->setTerminalId(self::$terminal_id)
             ->setLang('ro')
             ->setTimezone('Europe/Chisinau')
-            ->setMerchantPrivateKey(self::$merchant_private_key)
+            ->setMerchantPrivateKey(self::$merchant_private_key, self::$merchant_private_key_passphrase)
             ->setBankPublicKey(self::$bank_public_key)
             ->setSignatureAlgo(self::$signature_algo)
             ->setBackRefUrl(self::$backref_url);
@@ -217,7 +219,7 @@ class VictoriabankIntegrationTest extends TestCase
     public function testValidate()
     {
         $callback_data = json_decode(file_get_contents('./tests/testValidate.json'), true);
-        $is_valid = $this->client->validateSignature($callback_data, self::$bank_public_key);
+        $is_valid = $this->client->validateSignature($callback_data);
         $this->debugLog('validateSignature', $is_valid);
 
         $this->assertTrue($is_valid);
