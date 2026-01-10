@@ -128,7 +128,7 @@ class VictoriabankIntegrationTest extends TestCase
             'AMOUNT' => '10.00',
             'CURRENCY' => 'MDL',
             'ORDER' => VictoriabankClient::normalizeOrderId($order_id),
-            'DESC' => "Order #$$order_id",
+            'DESC' => "Order #$order_id",
             'MERCH_NAME' => self::$merchant_name,
             'MERCH_URL' => self::$merchant_url,
             'EMAIL' => 'example@example.com',

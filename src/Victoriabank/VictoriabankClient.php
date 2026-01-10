@@ -368,11 +368,13 @@ class VictoriabankClient extends GuzzleClient
             return false;
         }
 
-        $decrypted_hex = strtoupper(bin2hex($decrypted_bin));
+        $decrypted_hash = strtoupper(bin2hex($decrypted_bin));
         $calculated_hash = strtoupper(hash($algo, $mac));
 
         // Remove the prefix from the decrypted data to isolate the hash
-        $decrypted_hash = str_replace($prefix, '', $decrypted_hex);
+        if (strpos($decrypted_hash, $prefix) === 0) {
+            $decrypted_hash = substr($decrypted_hash, strlen($prefix));
+        }
 
         return hash_equals($decrypted_hash, $calculated_hash);
     }
