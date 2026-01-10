@@ -200,4 +200,11 @@ class VictoriabankIntegrationTest extends TestCase
         $html = $check_response['body'];
         file_put_contents('./tests/test2.html', $html);
     }
+
+    public function testValidate()
+    {
+        $callback_data = json_decode(file_get_contents('./tests/test.json'), true);
+        $is_valid = $this->client->validateSignature($callback_data, self::$bank_public_key);
+        $this->debugLog('validateSignature', $is_valid);
+    }
 }

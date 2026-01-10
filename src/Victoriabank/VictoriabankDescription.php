@@ -72,7 +72,7 @@ class VictoriabankDescription extends Description
                 'required' => true,
                 'description' => 'Transaction type',
                 'minLength' => 1,
-                'maxLength' => 2,
+                'maxLength' => 3,
             ],
             'TERMINAL' => [
                 'type' => 'string',
@@ -92,7 +92,7 @@ class VictoriabankDescription extends Description
                 'required' => true,
                 'description' => 'Checked transaction type',
                 'minLength' => 1,
-                'maxLength' => 2,
+                'maxLength' => 3,
             ],
         ];
 

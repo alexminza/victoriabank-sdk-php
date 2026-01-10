@@ -324,7 +324,7 @@ class VictoriabankClient extends GuzzleClient
                 $signature = self::createSignatureSha256($mac, $private_key_resource);
                 break;
             default:
-                throw new \Exception('Failed to generate transaction signature: Unknown P_SIGN hashing algorithm.');
+                throw new \Exception('Unknown P_SIGN hashing algorithm.');
         }
 
         if (PHP_VERSION_ID < 80000) {
@@ -335,7 +335,46 @@ class VictoriabankClient extends GuzzleClient
         return strtoupper(bin2hex($signature));
     }
 
-    public function validateSignature(array $params, array $psign_params, string $public_key) {}
+    public function validateSignature(array $params, string $public_key)
+    {
+        $mac = self::generateMac($params, self::GATEWAY_PSIGN_PARAMS);
+        $signature_bin = hex2bin($params['P_SIGN']);
+
+        $public_key_resource = openssl_pkey_get_public($public_key);
+
+        switch ($this->signature_algo) {
+            case self::P_SIGN_HASH_ALGO_MD5:
+                $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_MD5, self::VB_SIGNATURE_MD5_PREFIX);
+                break;
+            case self::P_SIGN_HASH_ALGO_SHA256:
+                $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_SHA256, self::VB_SIGNATURE_SHA256_PREFIX);
+                break;
+            default:
+                throw new \Exception('Unknown P_SIGN hashing algorithm.');
+        }
+
+        return $is_valid;
+    }
+
+    /**
+     * Decrypts the signature and checks for the specific ASN.1 prefix and hash match.
+     */
+    protected function verifySignature(string $mac, string $signature_bin, $pub_key, string $algo, string $prefix): bool
+    {
+        $decrypted_bin = '';
+        // Note: Victoriabank usually requires standard PKCS1 padding for public decryption
+        if (!openssl_public_decrypt($signature_bin, $decrypted_bin, $pub_key, OPENSSL_PKCS1_PADDING)) {
+            return false;
+        }
+
+        $decrypted_hex = strtoupper(bin2hex($decrypted_bin));
+        $calculated_hash = strtoupper(hash($algo, $mac));
+
+        // Remove the prefix from the decrypted data to isolate the hash
+        $decrypted_hash = str_replace($prefix, '', $decrypted_hex);
+
+        return hash_equals($decrypted_hash, $calculated_hash);
+    }
 
     protected static function generateMac(array $params, array $psign_params)
     {
@@ -364,12 +403,13 @@ class VictoriabankClient extends GuzzleClient
      *
      * This prefix is required for the e-Gateway to recognize the MD5 hash
      */
-    protected const VB_SIGNATURE_PREFIX = '003020300C06082A864886F70D020505000410';
+    protected const VB_SIGNATURE_MD5_PREFIX = '3020300C06082A864886F70D020505000410';
+    protected const VB_SIGNATURE_SHA256_PREFIX = '3031300D060960864801650304020105000420';
 
     protected static function createSignatureMd5(string $mac, $private_key_resource)
     {
         $mac_hash = md5($mac);
-        $signed_data = hex2bin(self::VB_SIGNATURE_PREFIX . $mac_hash);
+        $signed_data = hex2bin(self::VB_SIGNATURE_MD5_PREFIX . $mac_hash);
 
         // RSA Private Encryption with PKCS#1 padding
         // The specification describes manual padding, but openssl_private_encrypt
