@@ -174,6 +174,22 @@ class VictoriabankClient extends GuzzleClient
     /**
      * Authorize payment
      */
+    public function generateOrderAuthorizeRequest(string $order_id, float $amount, string $currency, string $description, string $merchant_name, string $merchant_url, string $merchant_address, string $email)
+    {
+        $authorize_data = [
+            'AMOUNT' => (string) $amount,
+            'CURRENCY' => $currency,
+            'ORDER' => self::normalizeOrderId($order_id),
+            'DESC' => $description,
+            'MERCH_NAME' => $merchant_name,
+            'MERCH_URL' => $merchant_url,
+            'EMAIL' => $email,
+            'MERCH_ADDRESS' => $merchant_address,
+        ];
+
+        return $this->generateAuthorizeRequest($authorize_data);
+    }
+
     public function generateAuthorizeRequest(array $authorize_data)
     {
         $args = $authorize_data;
@@ -197,6 +213,19 @@ class VictoriabankClient extends GuzzleClient
      * The card system will complete the financial transaction and transfer funds to the merchant account.
      * All fields are provided by merchant system and the cardholder does not participate in this transaction.
      */
+    public function orderComplete(string $order_id, float $amount, string $currency, string $rrn, string $int_ref)
+    {
+        $complete_data = [
+            'ORDER' => self::normalizeOrderId($order_id),
+            'AMOUNT' => (string) $amount,
+            'CURRENCY' => $currency,
+            'RRN' => $rrn,
+            'INT_REF' => $int_ref,
+        ];
+
+        return $this->complete($complete_data);
+    }
+
     public function complete(array $complete_data)
     {
         $args = $complete_data;
@@ -213,6 +242,19 @@ class VictoriabankClient extends GuzzleClient
      * cancel previously authorized or completed transactions.
      * All fields are provided by merchant system and the cardholder does not participate in this transaction.
      */
+    public function orderReverse(string $order_id, float $amount, string $currency, string $rrn, string $int_ref)
+    {
+        $reverse_data = [
+            'ORDER' => self::normalizeOrderId($order_id),
+            'AMOUNT' => (string) $amount,
+            'CURRENCY' => $currency,
+            'RRN' => $rrn,
+            'INT_REF' => $int_ref,
+        ];
+
+        return $this->reverse($reverse_data);
+    }
+
     public function reverse(array $reverse_data)
     {
         $args = $reverse_data;
@@ -221,6 +263,19 @@ class VictoriabankClient extends GuzzleClient
         $this->setTransactionParams($args);
 
         return parent::reverse($args);
+    }
+
+    /**
+     * Check transaction status
+     */
+    public function orderCheck(string $order_id, string $tran_trtype)
+    {
+        $check_data = [
+            'TRAN_TRTYPE' => $tran_trtype,
+            'ORDER' => self::normalizeOrderId($order_id),
+        ];
+
+        return $this->check($check_data);
     }
 
     public function check(array $check_data)
