@@ -175,6 +175,12 @@ class VictoriabankClient extends GuzzleClient
         return $args;
     }
 
+    /**
+     * Sales completion
+     * This transaction shall be sent by the merchant system when goods and/or services are delivered to cardholder.
+     * The card system will complete the financial transaction and transfer funds to the merchant account.
+     * All fields are provided by merchant system and the cardholder does not participate in this transaction.
+     */
     public function complete(array $complete_data)
     {
         $args = $complete_data;
@@ -185,6 +191,12 @@ class VictoriabankClient extends GuzzleClient
         return parent::complete($args);
     }
 
+    /**
+     * Reversal
+     * The reversal transaction request shall be sent by the merchant system to e-Commerce Gateway in order to
+     * cancel previously authorized or completed transactions.
+     * All fields are provided by merchant system and the cardholder does not participate in this transaction.
+     */
     public function reverse(array $reverse_data)
     {
         $args = $reverse_data;
@@ -247,6 +259,9 @@ class VictoriabankClient extends GuzzleClient
         return gmdate('YmdHis');
     }
 
+    /**
+     * Merchant UTC/GMT time zone offset (e.g. –3)
+     */
     protected function getTimezoneOffset()
     {
         $now = new \DateTime('now', $this->timezone);
@@ -265,11 +280,8 @@ class VictoriabankClient extends GuzzleClient
      */
     protected static function generateNonce()
     {
-        // Generate the cryptographically secure bytes
-        $bytes = random_bytes(32);
-
-        // Convert to hexadecimal format
-        return bin2hex($bytes);
+        // Generate cryptographically secure pseudo-random bytes
+        return bin2hex(random_bytes(32));
     }
 
     /**
@@ -318,6 +330,9 @@ class VictoriabankClient extends GuzzleClient
     protected const MERCHANT_PSIGN_PARAMS = ['ORDER', 'NONCE', 'TIMESTAMP', 'TRTYPE', 'AMOUNT'];
     protected const GATEWAY_PSIGN_PARAMS  = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
 
+    /**
+     * Generates payment gateway request data P_SIGN signature.
+     */
     public function generateSignature(array $params)
     {
         $mac = self::generateMac($params, self::MERCHANT_PSIGN_PARAMS);
@@ -342,6 +357,9 @@ class VictoriabankClient extends GuzzleClient
         return strtoupper(bin2hex($signature));
     }
 
+    /**
+     * Validates payment gateway response data P_SIGN signature.
+     */
     public function validateSignature(array $params)
     {
         $mac = self::generateMac($params, self::GATEWAY_PSIGN_PARAMS);
@@ -385,6 +403,12 @@ class VictoriabankClient extends GuzzleClient
         return hash_equals($decrypted_hash, $calculated_hash);
     }
 
+    /**
+     * Assembles a control string on which a digital signature will be generated.
+     *
+     * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
+     * Appendix A: P_SIGN creation/verification in the Merchant System
+     */
     protected static function generateMac(array $params, array $psign_params)
     {
         // Format: {length1}{value1}{length2}{value2}...
@@ -406,12 +430,7 @@ class VictoriabankClient extends GuzzleClient
         return $mac;
     }
 
-    /**
-     * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
-     * Appendix A: P_SIGN creation/verification in the Merchant System
-     *
-     * This prefix is required for the e-Gateway to recognize the MD5 hash
-     */
+    // This prefix is required for the e-Gateway to recognize the hash
     protected const VB_SIGNATURE_MD5_PREFIX = '3020300C06082A864886F70D020505000410';
     protected const VB_SIGNATURE_SHA256_PREFIX = '3031300D060960864801650304020105000420';
 

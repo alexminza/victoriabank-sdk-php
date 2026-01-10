@@ -14,7 +14,7 @@ composer.phar
 !.env.example
 
 # Tests
-/tests/
+/tests/*
 !/tests/*.php
 
 # PHPUnit

@@ -217,6 +217,7 @@ class VictoriabankDescription extends Description
                 'location' => 'formParam',
                 'required' => true,
                 'description' => 'Retrieval reference number from authorization response.',
+                'minLength' => 12,
                 'maxLength' => 12,
             ],
             'INT_REF' => [
@@ -257,7 +258,7 @@ class VictoriabankDescription extends Description
                     'httpMethod' => 'POST',
                     'uri' => '',
                     'summary' => 'Authorize payment',
-                    'responseModel' => 'getRawResponse', // AuthorizationResponse
+                    'responseModel' => 'getRawResponse', // TransactionResponse
                     'parameters' => $authorizeParameters,
                 ],
                 'complete' => [
@@ -265,7 +266,7 @@ class VictoriabankDescription extends Description
                     'httpMethod' => 'POST',
                     'uri' => '',
                     'summary' => 'Complete authorized transaction',
-                    'responseModel' => 'getRawResponse', // 'AuthorizationResponse',
+                    'responseModel' => 'getRawResponse', // 'TransactionResponse',
                     'parameters' => $completeParameters,
                 ],
                 'reverse' => [
@@ -307,7 +308,7 @@ class VictoriabankDescription extends Description
                 //endregion
 
                 //region Schema-based Models
-                'AuthorizationResponse' => [
+                'TransactionResponse' => [
                     'type' => 'object',
                     'additionalProperties' => [
                         'location' => 'body',
@@ -316,18 +317,14 @@ class VictoriabankDescription extends Description
                         'TERMINAL' => [
                             'type' => 'string',
                             'description' => 'Terminal ID (echo from request)',
-                            'maxLength' => 8,
                         ],
                         'TRTYPE' => [
                             'type' => 'string',
                             'description' => 'Transaction type (echo from request)',
-                            'maxLength' => 2,
                         ],
                         'ORDER' => [
                             'type' => 'string',
                             'description' => 'Order ID (echo from request)',
-                            'minLength' => 6,
-                            'maxLength' => 32,
                         ],
                         'AMOUNT' => [
                             'type' => 'string',
@@ -337,33 +334,27 @@ class VictoriabankDescription extends Description
                         'CURRENCY' => [
                             'type' => 'string',
                             'description' => 'Currency (echo from request)',
-                            'maxLength' => 3,
                         ],
                         'ACTION' => [
                             'type' => 'string',
                             'description' => 'E-Gateway action code: 0 – Transaction successfully completed; 1 – Duplicate transaction detected; 2 – Transaction declined; 3 – Transaction processing fault.',
-                            'enum' => ['0', '1', '2', '3'],
+                            // 'enum' => ['0', '1', '2', '3'],
                         ],
                         'RC' => [
                             'type' => 'string',
                             'description' => 'Transaction response code (ISO-8583 Field 39)',
-                            'maxLength' => 2,
                         ],
                         'APPROVAL' => [
                             'type' => 'string',
                             'description' => 'Client bank’s approval code (ISO-8583 Field 38). Can be empty if not provided by card management system.',
-                            'maxLength' => 6,
                         ],
                         'RRN' => [
                             'type' => 'string',
                             'description' => 'Merchant bank’s retrieval reference number (ISO-8583 Field 37).',
-                            'maxLength' => 12,
                         ],
                         'INT_REF' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway internal reference number',
-                            'minLength' => 1,
-                            'maxLength' => 32,
                         ],
                         'TIMESTAMP' => [
                             'type' => 'string',
@@ -375,96 +366,14 @@ class VictoriabankDescription extends Description
                         'NONCE' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway nonce value. Will be filled with 8-32 unpredictable random bytes in hexadecimal format. Will be present if MAC is used.',
-                            'minLength' => 1,
-                            'maxLength' => 64,
                         ],
                         'P_SIGN' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway MAC (Message Authentication Code) in hexadecimal form. Will be present if MAC is used.',
-                            'minLength' => 1,
-                            'maxLength' => 256,
                         ],
                         'ECI' => [
                             'type' => 'string',
-                            'description' => 'Electronic Commerce Indicator: ECI=empty – Technical fault; ECI=05 - Secure electronic commerce transaction (fully 3-D Secure authenticated); ECI=06 - Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program; ECI=07 - Non-authenticated Security Transaction',
-                            'maxLength' => 2,
-                        ],
-                    ],
-                ],
-                'TransactionResponse' => [
-                    'type' => 'object',
-                    'additionalProperties' => [
-                        'location' => 'body',
-                    ],
-                    'properties' => [
-                        'TERMINAL' => [
-                            'type' => 'string',
-                            'description' => 'Terminal ID',
-                            'maxLength' => 8,
-                        ],
-                        'TRTYPE' => [
-                            'type' => 'string',
-                            'description' => 'Transaction type',
-                            'maxLength' => 2,
-                        ],
-                        'ORDER' => [
-                            'type' => 'string',
-                            'description' => 'Order ID',
-                            'minLength' => 6,
-                            'maxLength' => 32,
-                        ],
-                        'AMOUNT' => [
-                            'type' => 'string',
-                            'description' => 'Transaction amount',
-                            'maxLength' => 12,
-                        ],
-                        'CURRENCY' => [
-                            'type' => 'string',
-                            'description' => 'Currency code',
-                            'maxLength' => 3,
-                        ],
-                        'ACTION' => [
-                            'type' => 'string',
-                            'description' => 'E-Gateway action code',
-                            'enum' => ['0', '1', '2', '3'],
-                        ],
-                        'RC' => [
-                            'type' => 'string',
-                            'description' => 'Transaction response code',
-                            'maxLength' => 2,
-                        ],
-                        'APPROVAL' => [
-                            'type' => 'string',
-                            'description' => 'Approval code',
-                            'maxLength' => 6,
-                        ],
-                        'RRN' => [
-                            'type' => 'string',
-                            'description' => 'Retrieval reference number',
-                            'maxLength' => 12,
-                        ],
-                        'INT_REF' => [
-                            'type' => 'string',
-                            'description' => 'Internal reference number',
-                            'minLength' => 1,
-                            'maxLength' => 32,
-                        ],
-                        'TIMESTAMP' => [
-                            'type' => 'string',
-                            'description' => 'Gateway timestamp in GMT',
-                            'pattern' => '/^\d{14}$/',
-                        ],
-                        'NONCE' => [
-                            'type' => 'string',
-                            'description' => 'Gateway nonce value',
-                            'minLength' => 1,
-                            'maxLength' => 64,
-                        ],
-                        'P_SIGN' => [
-                            'type' => 'string',
-                            'description' => 'Gateway MAC',
-                            'minLength' => 1,
-                            'maxLength' => 256,
+                            'description' => 'Electronic Commerce Indicator (ECI): ECI=empty – Technical fault; ECI=05 - Secure electronic commerce transaction (fully 3-D Secure authenticated); ECI=06 - Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program; ECI=07 - Non-authenticated Security Transaction',
                         ],
                     ],
                 ],
