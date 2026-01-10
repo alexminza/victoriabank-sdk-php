@@ -440,11 +440,9 @@ class VictoriabankClient extends GuzzleClient
 
         $mac = '';
         foreach ($psign_params as $key) {
-            // Strict check for null/empty string to allow "0"
-            $val = (isset($params[$key]) && $params[$key] !== '')
-                ? (string) $params[$key]
-                : '';
+            $val = (string) ($params[$key] ?? '');
 
+            // Strict check for null/empty string to allow "0"
             if ($val === '') {
                 throw new Exception("Empty P_SIGN parameter: $key");
             }
