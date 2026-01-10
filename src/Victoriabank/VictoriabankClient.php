@@ -27,6 +27,11 @@ class VictoriabankClient extends GuzzleClient
     public const TRTYPE_REVERSAL         = '24';
     public const TRTYPE_CHECK            = '90';
 
+    public const ACTION_SUCCESS   = 0;
+    public const ACTION_DUPLICATE = 1;
+    public const ACTION_DECLINED  = 2;
+    public const ACTION_FAULT     = 3;
+
     public const P_SIGN_HASH_ALGO_MD5    = 'md5';
     public const P_SIGN_HASH_ALGO_SHA256 = 'sha256';
 
@@ -335,6 +340,34 @@ class VictoriabankClient extends GuzzleClient
         }
 
         return $html;
+    }
+    //endregion
+
+    //region Reference
+    /**
+     * Validates bank response status and signature
+     *
+     * @throws Exception
+     */
+    public function validateResponse(array $response_data)
+    {
+        if (!isset($response_data['ACTION'])) {
+            throw new Exception('Invalid bank response status');
+        }
+
+        $response_action = (int) $response_data['ACTION'];
+        switch ($response_action) {
+            case self::ACTION_SUCCESS:
+                return $this->validateSignature($response_data);
+            case self::ACTION_DUPLICATE:
+                throw new Exception('Bank response: Duplicate transaction detected');
+            case self::ACTION_DECLINED:
+                throw new Exception('Bank response: Transaction declined');
+            case self::ACTION_FAULT:
+                throw new Exception('Bank response: Transaction processing fault');
+            default:
+                throw new Exception('Unknown bank response status');
+        }
     }
     //endregion
 
