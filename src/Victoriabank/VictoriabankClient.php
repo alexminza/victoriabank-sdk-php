@@ -339,7 +339,7 @@ class VictoriabankClient extends GuzzleClient
 
         $private_key_resource = openssl_pkey_get_private($this->merchant_private_key, $this->merchant_private_key_passphrase);
         if ($private_key_resource === false) {
-            throw new \Exception('Invalid private key or passphrase');
+            throw new Exception('Invalid private key or passphrase');
         }
 
         switch ($this->signature_algo) {
@@ -350,7 +350,7 @@ class VictoriabankClient extends GuzzleClient
                 $signature = self::createSignatureSha256($mac, $private_key_resource);
                 break;
             default:
-                throw new \Exception('Unknown P_SIGN hashing algorithm.');
+                throw new Exception('Unknown P_SIGN hashing algorithm.');
         }
 
         if (PHP_VERSION_ID < 80000) {
@@ -371,7 +371,7 @@ class VictoriabankClient extends GuzzleClient
 
         $public_key_resource = openssl_pkey_get_public($this->bank_public_key);
         if ($public_key_resource === false) {
-            throw new \Exception('Invalid public key.');
+            throw new Exception('Invalid public key.');
         }
 
         switch ($this->signature_algo) {
@@ -382,7 +382,7 @@ class VictoriabankClient extends GuzzleClient
                 $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_SHA256, self::VB_SIGNATURE_SHA256_PREFIX);
                 break;
             default:
-                throw new \Exception('Unknown P_SIGN hashing algorithm.');
+                throw new Exception('Unknown P_SIGN hashing algorithm.');
         }
 
         return $is_valid;
