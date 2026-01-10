@@ -18,18 +18,18 @@ use GuzzleHttp\Promise\FulfilledPromise;
 class VictoriabankClient extends GuzzleClient
 {
     public const DEFAULT_BASE_URL = 'https://vb059.vb.md/cgi-bin/cgi_link';
-    public const TEST_BASE_URL = 'https://ecomt.victoriabank.md/cgi-bin/cgi_link';
+    public const TEST_BASE_URL    = 'https://ecomt.victoriabank.md/cgi-bin/cgi_link';
 
-    public const TRTYPE_AUTHORIZATION = '0';
+    public const TRTYPE_AUTHORIZATION    = '0';
     public const TRTYPE_SALES_COMPLETION = '21';
-    public const TRTYPE_REVERSAL = '24';
-    public const TRTYPE_CHECK = '90';
+    public const TRTYPE_REVERSAL         = '24';
+    public const TRTYPE_CHECK            = '90';
 
     public const P_SIGN_HASH_ALGO_MD5    = 'md5';
     public const P_SIGN_HASH_ALGO_SHA256 = 'sha256';
 
     public const DEFAULT_COUNTRY = 'md';
-    public const DEFAULT_LANG = 'en';
+    public const DEFAULT_LANG    = 'en';
 
     //region Config
     /**
@@ -170,7 +170,7 @@ class VictoriabankClient extends GuzzleClient
         $args['COUNTRY'] = $this->country;
 
         $this->setTransactionParams($args);
-        $this->validateOperationArgs('authorize', $args);
+        $this->validateOperationArgsValidator('authorize', $args);
 
         return $args;
     }
@@ -227,7 +227,7 @@ class VictoriabankClient extends GuzzleClient
         $args['P_SIGN'] = $this->generateSignature($args);
     }
 
-    protected function validateOperationArgs(string $name, array $args)
+    protected function validateOperationArgsExecute(string $name, array $args)
     {
         $command = $this->getCommand($name, $args);
         $command->getHandlerStack()->setHandler(function () {
@@ -235,6 +235,16 @@ class VictoriabankClient extends GuzzleClient
         });
 
         $this->execute($command);
+    }
+
+    protected function validateOperationArgsValidator(string $name, array $args)
+    {
+        $description = $this->getDescription();
+        $command = $this->getCommand($name, $args);
+
+        $validation_handler = new ValidatedDescriptionHandler($description);
+        $validator = $validation_handler(function(){});
+        $validator($command, null);
     }
 
     /**
