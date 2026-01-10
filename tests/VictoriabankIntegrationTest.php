@@ -161,7 +161,7 @@ class VictoriabankIntegrationTest extends TestCase
     public function testComplete()
     {
         if (empty(self::$rrn) || empty(self::$int_ref)) {
-            $this->markTestIncomplete();
+            $this->markTestIncomplete('RRN and INT_REF are NOT SET');
             return;
         }
 
@@ -176,8 +176,12 @@ class VictoriabankIntegrationTest extends TestCase
         $complete_response = $this->client->complete(self::$complete_data);
         $this->debugLog('complete', $complete_response);
 
-        $this->assertIsArray($complete_response);
         $this->assertNotEmpty($complete_response);
+        $this->assertArrayHasKey('body', $complete_response);
+        $this->assertNotEmpty($complete_response['body']);
+
+        $html = $complete_response['body'];
+        file_put_contents('./tests/testComplete.html', $html);
     }
 
     /**
@@ -185,13 +189,27 @@ class VictoriabankIntegrationTest extends TestCase
      */
     public function testReverse()
     {
+        if (empty(self::$rrn) || empty(self::$int_ref)) {
+            $this->markTestIncomplete('RRN and INT_REF are NOT SET');
+            return;
+        }
+
+        if (empty(self::$complete_data)) {
+            $this->markTestIncomplete('COMPLETE DATA is NOT SET');
+            return;
+        }
+
         $reverse_data = self::$complete_data;
 
         $reverse_response = $this->client->reverse($reverse_data);
-        $this->debugLog('complete', $reverse_response);
+        $this->debugLog('reverse', $reverse_response);
 
-        $this->assertIsArray($reverse_response);
         $this->assertNotEmpty($reverse_response);
+        $this->assertArrayHasKey('body', $reverse_response);
+        $this->assertNotEmpty($reverse_response['body']);
+
+        $html = $reverse_response['body'];
+        file_put_contents('./tests/testReverse.html', $html);
     }
 
     /**
@@ -199,10 +217,9 @@ class VictoriabankIntegrationTest extends TestCase
      */
     public function testCheck()
     {
-        $order_id = 123;
         $check_data = [
             'TRAN_TRTYPE' => VictoriabankClient::TRTYPE_AUTHORIZATION,
-            'ORDER' => VictoriabankClient::normalizeOrderId($order_id),
+            'ORDER' => self::$authorize_data['ORDER'],
         ];
 
         $check_response = $this->client->check($check_data);

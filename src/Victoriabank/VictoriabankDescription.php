@@ -31,9 +31,10 @@ class VictoriabankDescription extends Description
 
     public function __construct(array $options = [])
     {
-        $version = self::detectVersion();
+        $version   = self::detectVersion();
         $userAgent = "victoriabank-sdk-php/$version";
 
+        //region Params
         $orderParam = [
             'ORDER' => [
                 'type' => 'string',
@@ -227,13 +228,14 @@ class VictoriabankDescription extends Description
                 'maxLength' => 32,
             ],
         ];
+        //endregion
 
-        $orderValueParams = array_merge($orderParam, $amountParams);
+        $orderValueParams  = array_merge($orderParam, $amountParams);
         $transactionParams = array_merge($terminalTrTypeParams, $transactionSignParams);
 
         $authorizeParameters = array_merge($orderValueParams, $authorizeOrderParams, $transactionParams);
-        $completeParameters = array_merge($orderValueParams, $transactionReferenceParams, $transactionParams);
-        $checkParameters = array_merge($terminalTrTypeParams, $tranTrTypeParam, $orderParam);
+        $completeParameters  = array_merge($orderValueParams, $transactionReferenceParams, $transactionParams);
+        $checkParameters     = array_merge($terminalTrTypeParams, $tranTrTypeParam, $orderParam);
 
         $description = [
             // 'baseUrl' => 'https://vb059.vb.md/cgi-bin/cgi_link',
@@ -263,7 +265,7 @@ class VictoriabankDescription extends Description
                     'httpMethod' => 'POST',
                     'uri' => '',
                     'summary' => 'Complete authorized transaction',
-                    'responseModel' => 'AuthorizationResponse',
+                    'responseModel' => 'getRawResponse', // 'AuthorizationResponse',
                     'parameters' => $completeParameters,
                 ],
                 'reverse' => [
@@ -271,7 +273,7 @@ class VictoriabankDescription extends Description
                     'httpMethod' => 'POST',
                     'uri' => '',
                     'summary' => 'Reverse authorized or completed transaction',
-                    'responseModel' => 'TransactionResponse',
+                    'responseModel' => 'getRawResponse', // 'TransactionResponse',
                     'parameters' => $completeParameters,
                 ],
                 'check' => [
