@@ -224,7 +224,7 @@ class VictoriabankClient extends GuzzleClient
      */
     public static function normalizeOrderId($order_id)
     {
-        return sprintf('%06s', $order_id);
+        return str_pad($order_id, 6, '0', STR_PAD_LEFT);
     }
 
     public static function deNormalizeOrderId($order_id)
