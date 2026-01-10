@@ -35,8 +35,8 @@ class VictoriabankClient extends GuzzleClient
     public const P_SIGN_HASH_ALGO_MD5    = 'md5';
     public const P_SIGN_HASH_ALGO_SHA256 = 'sha256';
 
-    public const DEFAULT_COUNTRY = 'md';
-    public const DEFAULT_LANG    = 'en';
+    public const DEFAULT_COUNTRY  = 'md';
+    public const DEFAULT_LANGUAGE = 'en';
 
     //region Config
     /**
@@ -57,7 +57,7 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
-    protected $lang = self::DEFAULT_LANG;
+    protected $language = self::DEFAULT_LANGUAGE;
 
     /**
      * @var string
@@ -117,18 +117,27 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
-    public function setLang(string $lang)
+    /**
+     * @link https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
+     */
+    public function setLanguage(string $language)
     {
-        $this->lang = $lang;
+        $this->language = $language;
         return $this;
     }
 
+    /**
+     * @link https://en.wikipedia.org/wiki/ISO_3166-1
+     */
     public function setCountry(string $country)
     {
         $this->country = $country;
         return $this;
     }
 
+    /**
+     * @link https://www.php.net/manual/en/timezones.php
+     */
     public function setTimezone(string $timezone)
     {
         $this->timezone = new \DateTimeZone($timezone);
@@ -173,7 +182,7 @@ class VictoriabankClient extends GuzzleClient
         $args['MERCH_GMT'] = $this->getTimezoneOffset();
         $args['MERCHANT'] = $this->merchant_id;
         $args['BACKREF'] = $this->backref_url;
-        $args['LANG'] = $this->lang;
+        $args['LANG'] = $this->language;
         $args['COUNTRY'] = $this->country;
 
         $this->setTransactionParams($args);
