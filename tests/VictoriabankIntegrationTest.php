@@ -15,6 +15,7 @@ class VictoriabankIntegrationTest extends TestCase
     protected static $merchant_id;
 
     protected static $merchant_private_key;
+    protected static $merchant_public_key;
     protected static $bank_public_key;
     protected static $signature_algo;
 
@@ -43,6 +44,7 @@ class VictoriabankIntegrationTest extends TestCase
         self::$terminal_id = getenv('VICTORIABANK_TERMINAL_ID');
 
         self::$merchant_private_key = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY');
+        self::$merchant_public_key  = getenv('VICTORIABANK_MERCHANT_PUBLIC_KEY');
         self::$bank_public_key      = getenv('VICTORIABANK_BANK_PUBLIC_KEY');
         self::$signature_algo       = getenv('VICTORIABANK_SIGNATURE_ALGO');
 
@@ -51,7 +53,10 @@ class VictoriabankIntegrationTest extends TestCase
         self::$merchant_address = getenv('VICTORIABANK_MERCHANT_ADDRESS');
         self::$backref_url      = getenv('VICTORIABANK_BACKREF_URL');
 
-        self::$baseUrl = VictoriabankClient::TEST_BASE_URL;
+        self::$baseUrl = getenv('VICTORIABANK_GATEWAY_URL');
+        if (empty(self::$baseUrl)) {
+            self::$baseUrl = VictoriabankClient::TEST_BASE_URL;
+        }
 
         if (empty(self::$merchant_id) || empty(self::$terminal_id) || empty(self::$merchant_private_key) || empty(self::$bank_public_key) || empty(self::$signature_algo)) {
             self::markTestSkipped('Integration test credentials not provided.');

@@ -13,7 +13,9 @@ composer.phar
 .env.*
 !.env.example
 
-*.pem
+# Tests
+/tests/
+!/tests/*.php
 
 # PHPUnit
 /.phpunit.cache
