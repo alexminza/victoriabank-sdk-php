@@ -117,7 +117,7 @@ class VictoriabankIntegrationTest extends TestCase
 
     protected function debugLog($message, $data)
     {
-        $data_print = print_r($data, true);
+        $data_print = var_export($data, true);
         error_log("$message: $data_print");
     }
 
@@ -206,5 +206,7 @@ class VictoriabankIntegrationTest extends TestCase
         $callback_data = json_decode(file_get_contents('./tests/test.json'), true);
         $is_valid = $this->client->validateSignature($callback_data, self::$bank_public_key);
         $this->debugLog('validateSignature', $is_valid);
+
+        $this->assertTrue($is_valid);
     }
 }
