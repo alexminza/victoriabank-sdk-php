@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Victoriabank\Victoriabank;
 
 use GuzzleHttp\Command\Guzzle\Description;

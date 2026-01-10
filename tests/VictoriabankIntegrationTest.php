@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Victoriabank\Victoriabank\Tests;
 
 use Victoriabank\Victoriabank\VictoriabankClient;
@@ -45,7 +47,7 @@ class VictoriabankIntegrationTest extends TestCase
         self::$terminal_id = getenv('VICTORIABANK_TERMINAL_ID');
 
         self::$merchant_private_key = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY');
-        self::$merchant_private_key_passphrase = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY_PASSPHRASE');
+        self::$merchant_private_key_passphrase = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY_PASSPHRASE') ?: null;
         self::$merchant_public_key  = getenv('VICTORIABANK_MERCHANT_PUBLIC_KEY');
         self::$bank_public_key      = getenv('VICTORIABANK_BANK_PUBLIC_KEY');
         self::$signature_algo       = getenv('VICTORIABANK_SIGNATURE_ALGO');
@@ -133,7 +135,7 @@ class VictoriabankIntegrationTest extends TestCase
 
     public function testAuthorize()
     {
-        $order_id = 123;
+        $order_id = '123';
         self::$authorize_data = [
             'AMOUNT' => '10.00',
             'CURRENCY' => 'MDL',

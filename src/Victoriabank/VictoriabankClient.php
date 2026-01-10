@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Victoriabank\Victoriabank;
 
 use GuzzleHttp\Client;
@@ -250,12 +252,12 @@ class VictoriabankClient extends GuzzleClient
     /**
      * Merchant order ID (6-32 characters)
      */
-    public static function normalizeOrderId($order_id)
+    public static function normalizeOrderId(string $order_id)
     {
         return str_pad($order_id, 6, '0', STR_PAD_LEFT);
     }
 
-    public static function deNormalizeOrderId($order_id)
+    public static function deNormalizeOrderId(string $order_id)
     {
         return ltrim($order_id, '0');
     }
@@ -429,6 +431,8 @@ class VictoriabankClient extends GuzzleClient
      *
      * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
      * Appendix A: P_SIGN creation/verification in the Merchant System
+     *
+     * @throws Exception
      */
     protected static function generateMac(array $params, array $psign_params)
     {
@@ -441,11 +445,11 @@ class VictoriabankClient extends GuzzleClient
                 ? (string) $params[$key]
                 : '';
 
-            if ($val !== '') {
-                $mac .= strlen($val) . $val;
-            } else {
-                $mac .= '-';
+            if ($val === '') {
+                throw new Exception("Empty P_SIGN parameter: $key");
             }
+
+            $mac .= strlen($val) . $val;
         }
 
         return $mac;
