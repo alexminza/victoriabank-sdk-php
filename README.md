@@ -31,19 +31,13 @@ Add project configuration:
 ```php
 $DEBUG = getenv('DEBUG');
 
-$VB_BASE_URI = getenv('VB_BASE_URI');
+$VB_BASE_URI = getenv('VB_BASE_URI') ?: VictoriabankClient::TEST_BASE_URL;
 $VB_MERCHANT_ID = getenv('VB_MERCHANT_ID');
 $VB_TERMINAL_ID = getenv('VB_TERMINAL_ID');
-$VB_MERCHANT_PRIVATE_KEY  = getenv('VB_MERCHANT_PRIVATE_KEY');
+$VB_MERCHANT_PRIVATE_KEY  = getenv('VB_MERCHANT_PRIVATE_KEY') ?: 'file://key.pem';
 $VB_MERCHANT_PRIVATE_KEY_PASSPHRASE = getenv('VB_MERCHANT_PRIVATE_KEY_PASSPHRASE');
-$VB_MERCHANT_PUBLIC_KEY = getenv('VB_MERCHANT_PUBLIC_KEY');
-$VB_BANK_PUBLIC_KEY = getenv('VB_BANK_PUBLIC_KEY');
-$VB_MERCHANT_PUBLIC_KEY = getenv('VB_MERCHANT_PUBLIC_KEY');
-$VB_SIGNATURE_ALGO = getenv('VB_SIGNATURE_ALGO');
-$VB_MERCHANT_NAME = getenv('VB_MERCHANT_NAME');
-$VB_MERCHANT_URL = getenv('VB_MERCHANT_URL');
-$VB_MERCHANT_ADDRESS = getenv('VB_MERCHANT_ADDRESS');
-$VVB_BACKREF_URL = getenv('VVB_BACKREF_URL');
+$VB_MERCHANT_PUBLIC_KEY = getenv('VB_MERCHANT_PUBLIC_KEY') ?: 'file://pubkey.pem';
+$VB_BANK_PUBLIC_KEY = getenv('VB_BANK_PUBLIC_KEY') ?: 'file://victoria_pub.pem';
 ```
 
 Initialize client:
@@ -69,4 +63,82 @@ if ($DEBUG) {
 
 $guzzleClient = new \GuzzleHttp\Client($options);
 $vbClient = new VictoriabankClient($guzzleClient);
+
+$vbClient
+    ->setMerchantId($VB_MERCHANT_ID)
+    ->setTerminalId($VB_TERMINAL_ID)
+    ->setLanguage('en')
+    ->setTimezone('Europe/Chisinau')
+    ->setMerchantPrivateKey($VB_MERCHANT_PRIVATE_KEY, $VB_MERCHANT_PRIVATE_KEY_PASSPHRASE)
+    ->setBankPublicKey($VB_BANK_PUBLIC_KEY)
+    ->setSignatureAlgo(VictoriabankClient::P_SIGN_HASH_ALGO_SHA256)
+    ->setBackRefUrl('https://www.example.com');
+```
+
+## SDK usage examples
+
+### Generate payment authorization request form
+
+```php
+$authorizeRequest = $vbClient->generateOrderAuthorizeRequest(
+    '123',
+    123.45,
+    'MDL',
+    'Order #123',
+    'TEST COMPANY SRL',
+    'https://www.example.com',
+    'Chisinau, Moldova',
+    'example@example.com'
+);
+
+$html = $vbClient->generateHtmlForm($VB_BASE_URI, $authorizeRequest);
+echo $html;
+```
+
+### Validate bank notification callback signature
+
+```php
+try {
+    $isValid = $vbClient->validateResponse($_POST);
+    if ($isValid) {
+        // Payment authorized/completed successfully
+        // Process the order (e.g. update status in DB)
+    }
+} catch (\Exception $e) {
+    // Handle error (e.g. log error, invalid signature, duplicate transaction, declined)
+    echo 'Error: ' . $e->getMessage();
+}
+```
+
+### Complete authorized payment
+
+```php
+$rrn = '';
+$int_ref = '';
+
+$completeResponse = $vbClient->orderComplete(
+    '123',
+    123.45,
+    'MDL',
+    $rrn,
+    $int_ref
+);
+```
+
+### Refund payment
+
+```php
+$reverseResponse = $vbClient->orderReverse(
+    '123',
+    123.45,
+    'MDL',
+    $rrn,
+    $int_ref
+);
+```
+
+### Check order payment status
+
+```php
+$checkResponse = $vbClient->orderCheck('123', VictoriabankClient::TRTYPE_AUTHORIZATION);
 ```

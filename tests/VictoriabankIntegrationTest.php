@@ -57,10 +57,7 @@ class VictoriabankIntegrationTest extends TestCase
         self::$merchant_address = getenv('VB_MERCHANT_ADDRESS');
         self::$backref_url      = getenv('VB_BACKREF_URL');
 
-        self::$baseUri = getenv('VB_BASE_URI');
-        if (empty(self::$baseUri)) {
-            self::$baseUri = VictoriabankClient::TEST_BASE_URL;
-        }
+        self::$baseUri = getenv('VB_BASE_URI') ?: VictoriabankClient::TEST_BASE_URL;
 
         if (empty(self::$merchant_id) || empty(self::$terminal_id) || empty(self::$merchant_private_key) || empty(self::$bank_public_key) || empty(self::$signature_algo)) {
             self::markTestSkipped('Integration test credentials not provided.');
