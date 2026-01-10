@@ -27,7 +27,7 @@ class VictoriabankIntegrationTest extends TestCase
     protected static $merchant_address;
     protected static $backref_url;
 
-    protected static $baseUrl;
+    protected static $baseUri;
 
     // Shared state
     protected static $authorize_data;
@@ -43,23 +43,23 @@ class VictoriabankIntegrationTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$merchant_id = getenv('VICTORIABANK_MERCHANT_ID');
-        self::$terminal_id = getenv('VICTORIABANK_TERMINAL_ID');
+        self::$merchant_id = getenv('VB_MERCHANT_ID');
+        self::$terminal_id = getenv('VB_TERMINAL_ID');
 
-        self::$merchant_private_key = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY');
-        self::$merchant_private_key_passphrase = getenv('VICTORIABANK_MERCHANT_PRIVATE_KEY_PASSPHRASE') ?: null;
-        self::$merchant_public_key  = getenv('VICTORIABANK_MERCHANT_PUBLIC_KEY');
-        self::$bank_public_key      = getenv('VICTORIABANK_BANK_PUBLIC_KEY');
-        self::$signature_algo       = getenv('VICTORIABANK_SIGNATURE_ALGO');
+        self::$merchant_private_key = getenv('VB_MERCHANT_PRIVATE_KEY');
+        self::$merchant_private_key_passphrase = getenv('VB_MERCHANT_PRIVATE_KEY_PASSPHRASE') ?: null;
+        self::$merchant_public_key  = getenv('VB_MERCHANT_PUBLIC_KEY');
+        self::$bank_public_key      = getenv('VB_BANK_PUBLIC_KEY');
+        self::$signature_algo       = getenv('VB_SIGNATURE_ALGO');
 
-        self::$merchant_name    = getenv('VICTORIABANK_MERCHANT_NAME');
-        self::$merchant_url     = getenv('VICTORIABANK_MERCHANT_URL');
-        self::$merchant_address = getenv('VICTORIABANK_MERCHANT_ADDRESS');
-        self::$backref_url      = getenv('VICTORIABANK_BACKREF_URL');
+        self::$merchant_name    = getenv('VB_MERCHANT_NAME');
+        self::$merchant_url     = getenv('VB_MERCHANT_URL');
+        self::$merchant_address = getenv('VB_MERCHANT_ADDRESS');
+        self::$backref_url      = getenv('VB_BACKREF_URL');
 
-        self::$baseUrl = getenv('VICTORIABANK_GATEWAY_URL');
-        if (empty(self::$baseUrl)) {
-            self::$baseUrl = VictoriabankClient::TEST_BASE_URL;
+        self::$baseUri = getenv('VB_BASE_URI');
+        if (empty(self::$baseUri)) {
+            self::$baseUri = VictoriabankClient::TEST_BASE_URL;
         }
 
         if (empty(self::$merchant_id) || empty(self::$terminal_id) || empty(self::$merchant_private_key) || empty(self::$bank_public_key) || empty(self::$signature_algo)) {
@@ -67,15 +67,15 @@ class VictoriabankIntegrationTest extends TestCase
         }
 
         // TEST DATA
-        self::$rrn     = getenv('VICTORIABANK_TEST_RRN');
-        self::$int_ref = getenv('VICTORIABANK_TEST_INT_REF');
+        self::$rrn     = getenv('VB_TEST_RRN');
+        self::$int_ref = getenv('VB_TEST_INT_REF');
     }
 
     protected function setUp(): void
     {
         $options = [
-            'base_uri' => self::$baseUrl,
-            'timeout' => 15,
+            'base_uri' => self::$baseUri,
+            'timeout' => 30,
         ];
 
         #region Logging
@@ -97,7 +97,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->client
             ->setMerchantId(self::$merchant_id)
             ->setTerminalId(self::$terminal_id)
-            ->setLang('ro')
+            ->setLanguage('ro')
             ->setTimezone('Europe/Chisinau')
             ->setMerchantPrivateKey(self::$merchant_private_key, self::$merchant_private_key_passphrase)
             ->setBankPublicKey(self::$bank_public_key)
@@ -153,7 +153,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertIsArray($authorize_request);
         $this->assertNotEmpty($authorize_request);
 
-        $html = $this->client->generateHtmlForm(self::$baseUrl, $authorize_request);
+        $html = $this->client->generateHtmlForm(self::$baseUri, $authorize_request);
         file_put_contents('./tests/testAuthorize.html', $html);
     }
 

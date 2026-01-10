@@ -207,7 +207,7 @@ class VictoriabankDescription extends Description
                 'required' => false,
                 'description' => 'Transaction forms language. By default are available forms in en, ro, ru. If need forms in another languages please contact gateway administrator.',
                 'enum' => ['en', 'ro', 'ru'],
-                'default' => VictoriabankClient::DEFAULT_LANG,
+                'default' => VictoriabankClient::DEFAULT_LANGUAGE,
                 'minLength' => 2,
                 'maxLength' => 2,
             ],
@@ -331,7 +331,6 @@ class VictoriabankDescription extends Description
                         'AMOUNT' => [
                             'type' => 'string',
                             'description' => 'Amount (echo from request)',
-                            'maxLength' => 12,
                         ],
                         'CURRENCY' => [
                             'type' => 'string',
@@ -361,9 +360,6 @@ class VictoriabankDescription extends Description
                         'TIMESTAMP' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway timestamp in GMT: YYYYMMDDHHMMSS',
-                            'pattern' => '/^\d{14}$/',
-                            'minLength' => 14,
-                            'maxLength' => 14,
                         ],
                         'NONCE' => [
                             'type' => 'string',
