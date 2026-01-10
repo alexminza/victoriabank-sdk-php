@@ -29,7 +29,6 @@ class VictoriabankIntegrationTest extends TestCase
     protected static $authorize_data;
     protected static $complete_data;
 
-    protected static $trans_id;
     protected static $rrn;
     protected static $int_ref;
 
@@ -57,6 +56,10 @@ class VictoriabankIntegrationTest extends TestCase
         if (empty(self::$merchant_id) || empty(self::$terminal_id) || empty(self::$merchant_private_key) || empty(self::$bank_public_key) || empty(self::$signature_algo)) {
             self::markTestSkipped('Integration test credentials not provided.');
         }
+
+        // TEST DATA
+        self::$rrn     = getenv('VICTORIABANK_TEST_RRN');
+        self::$int_ref = getenv('VICTORIABANK_TEST_INT_REF');
     }
 
     protected function setUp(): void
@@ -150,12 +153,17 @@ class VictoriabankIntegrationTest extends TestCase
      */
     public function testComplete()
     {
+        if (empty(self::$rrn) || empty(self::$int_ref)) {
+            $this->markTestIncomplete();
+            return;
+        }
+
         self::$complete_data = [
             'ORDER' => self::$authorize_data['ORDER'],
             'AMOUNT' => self::$authorize_data['AMOUNT'],
             'CURRENCY' => self::$authorize_data['CURRENCY'],
-            'RRN' => null,
-            'INT_REF' => null,
+            'RRN' => self::$rrn,
+            'INT_REF' => self::$int_ref,
         ];
 
         $complete_response = $this->client->complete(self::$complete_data);
