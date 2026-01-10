@@ -142,7 +142,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertNotEmpty($authorize_request);
 
         $html = $this->client->generateHtmlForm(self::$baseUrl, $authorize_request);
-        file_put_contents('./tests/test.html', $html);
+        file_put_contents('./tests/testAuthorize.html', $html);
     }
 
     /**
@@ -198,12 +198,12 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertNotEmpty($check_response['body']);
 
         $html = $check_response['body'];
-        file_put_contents('./tests/test2.html', $html);
+        file_put_contents('./tests/testCheck.html', $html);
     }
 
     public function testValidate()
     {
-        $callback_data = json_decode(file_get_contents('./tests/test.json'), true);
+        $callback_data = json_decode(file_get_contents('./tests/testValidate.json'), true);
         $is_valid = $this->client->validateSignature($callback_data, self::$bank_public_key);
         $this->debugLog('validateSignature', $is_valid);
 

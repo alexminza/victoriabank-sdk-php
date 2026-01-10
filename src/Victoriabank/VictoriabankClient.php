@@ -282,25 +282,26 @@ class VictoriabankClient extends GuzzleClient
             $form_id = uniqid('form-');
         }
 
-        $form_id = htmlspecialchars($form_id, ENT_QUOTES);
-        $submit_id = "$form_id-submit";
-        $attr_action = htmlspecialchars($action, ENT_QUOTES);
+        $form_id_attr = htmlspecialchars($form_id, ENT_QUOTES);
+        $submit_id_attr = htmlspecialchars("$form_id-submit", ENT_QUOTES);
+        $action_attr = htmlspecialchars($action, ENT_QUOTES);
 
-        $html = "<form id='$form_id' name='$form_id' method='POST' action='$attr_action'>\n";
+        $html = "<form id=\"$form_id_attr\" name=\"$form_id_attr\" method=\"POST\" action=\"$action_attr\">\n";
         foreach ($args as $name => $value) {
-            $attr_name = htmlspecialchars($name, ENT_QUOTES);
-            $attr_value = htmlspecialchars($value, ENT_QUOTES);
-            $html .= "\t<input type='hidden' name='$attr_name' value='$attr_value' />\n";
+            $name_attr = htmlspecialchars($name, ENT_QUOTES);
+            $value_attr = htmlspecialchars($value, ENT_QUOTES);
+            $html .= "\t<input type=\"hidden\" name=\"$name_attr\" value=\"$value_attr\" />\n";
         }
 
         if (!$auto_submit) {
-            $html .= "\t<input type='submit' id='$submit_id' name='$submit_id' />\n";
+            $html .= "\t<input type=\"submit\" id=\"$submit_id_attr\" name=\"$submit_id_attr\" />\n";
         }
 
         $html .= "</form>\n";
 
         if ($auto_submit) {
-            $html .= "<script type='text/javascript'>document.getElementById('$form_id').submit();</script>\n";
+            $js_form_id = json_encode($form_id);
+            $html .= "<script type=\"text/javascript\">document.getElementById($js_form_id).submit();</script>\n";
         }
 
         return $html;
