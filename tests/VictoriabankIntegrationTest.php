@@ -133,8 +133,9 @@ class VictoriabankIntegrationTest extends TestCase
     public function testAuthorize()
     {
         $order_id = '123';
+        $amount = 123.45;
         self::$authorize_data = [
-            'AMOUNT' => '10.00',
+            'AMOUNT' => (string) $amount,
             'CURRENCY' => 'MDL',
             'ORDER' => VictoriabankClient::normalizeOrderId($order_id),
             'DESC' => "Order #$order_id",
@@ -144,7 +145,17 @@ class VictoriabankIntegrationTest extends TestCase
             'MERCH_ADDRESS' => self::$merchant_address,
         ];
 
-        $authorize_request = $this->client->generateAuthorizeRequest(self::$authorize_data);
+        // $authorize_request = $this->client->generateAuthorizeRequest(self::$authorize_data);
+        $authorize_request = $this->client->generateOrderAuthorizeRequest(
+            $order_id,
+            $amount,
+            self::$authorize_data['CURRENCY'],
+            self::$authorize_data['DESC'],
+            self::$merchant_name,
+            self::$merchant_url,
+            self::$merchant_address,
+            self::$authorize_data['EMAIL']
+        );
         $this->debugLog('generateAuthorizeRequest', $authorize_request);
 
         $this->assertIsArray($authorize_request);
