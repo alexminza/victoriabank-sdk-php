@@ -472,15 +472,12 @@ class VictoriabankClient extends GuzzleClient
         }
 
         try {
-            switch ($this->signature_algo) {
-                case self::P_SIGN_HASH_ALGO_MD5:
-                    $signature = self::createSignatureMd5($mac, $private_key_resource);
-                    break;
-                case self::P_SIGN_HASH_ALGO_SHA256:
-                    $signature = self::createSignatureSha256($mac, $private_key_resource);
-                    break;
-                default:
-                    throw new VictoriabankException('Unknown P_SIGN hashing algorithm');
+            $signature = '';
+            $sign_result = openssl_sign($mac, $signature, $private_key_resource, $this->signature_algo);
+
+            if (!$sign_result) {
+                $error = openssl_error_string();
+                throw new VictoriabankException($error);
             }
 
             return strtoupper(bin2hex($signature));
@@ -508,46 +505,20 @@ class VictoriabankClient extends GuzzleClient
         }
 
         try {
-            switch ($this->signature_algo) {
-                case self::P_SIGN_HASH_ALGO_MD5:
-                    $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_MD5, self::VB_SIGNATURE_MD5_PREFIX);
-                    break;
-                case self::P_SIGN_HASH_ALGO_SHA256:
-                    $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_SHA256, self::VB_SIGNATURE_SHA256_PREFIX);
-                    break;
-                default:
-                    throw new VictoriabankException('Unknown P_SIGN hashing algorithm');
+            $verify_result = openssl_verify($mac, $signature_bin, $public_key_resource, $this->signature_algo);
+
+            if ($verify_result === -1) {
+                $error = openssl_error_string();
+                throw new VictoriabankException($error);
             }
 
-            return $is_valid;
+            return $verify_result === 1;
         } finally {
             if (PHP_VERSION_ID < 80000) {
                 // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP_VERSION_ID check performed before invocation.
                 openssl_free_key($public_key_resource);
             }
         }
-    }
-
-    /**
-     * Decrypts the signature and checks for the specific ASN.1 prefix and hash match.
-     */
-    protected function verifySignature(string $mac, string $signature_bin, $pub_key, string $algo, string $prefix): bool
-    {
-        $decrypted_bin = '';
-        // Note: Victoriabank usually requires standard PKCS1 padding for public decryption
-        if (!openssl_public_decrypt($signature_bin, $decrypted_bin, $pub_key, OPENSSL_PKCS1_PADDING)) {
-            return false;
-        }
-
-        $decrypted_hash = strtoupper(bin2hex($decrypted_bin));
-        $calculated_hash = strtoupper(hash($algo, $mac));
-
-        // Remove the prefix from the decrypted data to isolate the hash
-        if (strpos($decrypted_hash, $prefix) === 0) {
-            $decrypted_hash = substr($decrypted_hash, strlen($prefix));
-        }
-
-        return hash_equals($decrypted_hash, $calculated_hash);
     }
 
     /**
@@ -575,42 +546,6 @@ class VictoriabankClient extends GuzzleClient
         }
 
         return $mac;
-    }
-
-    // This prefix is required for the e-Gateway to recognize the hash
-    protected const VB_SIGNATURE_MD5_PREFIX = '3020300C06082A864886F70D020505000410';
-    protected const VB_SIGNATURE_SHA256_PREFIX = '3031300D060960864801650304020105000420';
-
-    protected static function createSignatureMd5(string $mac, $private_key_resource)
-    {
-        $mac_hash = md5($mac);
-        $signed_data = hex2bin(self::VB_SIGNATURE_MD5_PREFIX . $mac_hash);
-
-        // RSA Private Encryption with PKCS#1 padding
-        // The specification describes manual padding, but openssl_private_encrypt
-        // handles this automatically with the OPENSSL_PKCS1_PADDING flag.
-        $signature = '';
-        $encrypt_result = openssl_private_encrypt($signed_data, $signature, $private_key_resource, OPENSSL_PKCS1_PADDING);
-
-        if (!$encrypt_result) {
-            $error = openssl_error_string();
-            throw new VictoriabankException($error);
-        }
-
-        return $signature;
-    }
-
-    protected static function createSignatureSha256(string $mac, $private_key_resource)
-    {
-        $signature = '';
-        $sign_result = openssl_sign($mac, $signature, $private_key_resource, OPENSSL_ALGO_SHA256);
-
-        if (!$sign_result) {
-            $error = openssl_error_string();
-            throw new VictoriabankException($error);
-        }
-
-        return $signature;
     }
     //endregion
 }

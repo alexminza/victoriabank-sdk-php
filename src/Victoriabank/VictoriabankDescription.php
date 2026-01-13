@@ -346,6 +346,7 @@ class VictoriabankDescription extends Description
                             'description' => 'E-Gateway action code: 0 – Transaction successfully completed; 1 – Duplicate transaction detected; 2 – Transaction declined; 3 – Transaction processing fault.',
                             'required' => true,
                         ],
+                        // https://en.wikipedia.org/wiki/ISO_8583#Response_code
                         'RC' => [
                             'type' => 'string',
                             'description' => 'Transaction response code (ISO-8583 Field 39)',
