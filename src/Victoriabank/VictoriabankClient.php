@@ -458,6 +458,33 @@ class VictoriabankClient extends GuzzleClient
     protected const GATEWAY_PSIGN_PARAMS  = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
 
     /**
+     * Assembles a control string on which a digital signature will be generated.
+     *
+     * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
+     * Appendix A: P_SIGN creation/verification in the Merchant System
+     *
+     * @throws VictoriabankException
+     */
+    protected static function generateMac(array $params, array $psign_params)
+    {
+        // Format: {length1}{value1}{length2}{value2}...
+
+        $mac = '';
+        foreach ($psign_params as $key) {
+            $val = (string) ($params[$key] ?? '');
+
+            // Strict check for null/empty string to allow "0"
+            if ($val === '') {
+                throw new VictoriabankException("Empty P_SIGN parameter: $key");
+            }
+
+            $mac .= strlen($val) . $val;
+        }
+
+        return $mac;
+    }
+
+    /**
      * Generates payment gateway request data P_SIGN signature.
      *
      * @throws VictoriabankException
@@ -521,33 +548,6 @@ class VictoriabankClient extends GuzzleClient
                 openssl_free_key($public_key_resource);
             }
         }
-    }
-
-    /**
-     * Assembles a control string on which a digital signature will be generated.
-     *
-     * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
-     * Appendix A: P_SIGN creation/verification in the Merchant System
-     *
-     * @throws VictoriabankException
-     */
-    protected static function generateMac(array $params, array $psign_params)
-    {
-        // Format: {length1}{value1}{length2}{value2}...
-
-        $mac = '';
-        foreach ($psign_params as $key) {
-            $val = (string) ($params[$key] ?? '');
-
-            // Strict check for null/empty string to allow "0"
-            if ($val === '') {
-                throw new VictoriabankException("Empty P_SIGN parameter: $key");
-            }
-
-            $mac .= strlen($val) . $val;
-        }
-
-        return $mac;
     }
     //endregion
 }
