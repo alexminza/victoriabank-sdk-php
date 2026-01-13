@@ -301,11 +301,16 @@ class VictoriabankIntegrationTest extends TestCase
 
         $this->assertTrue($is_valid);
 
-        $this->expectException(VictoriabankException::class);
-        $is_valid = $this->client->validateResponseModel('TransactionResponse', self::$authorize_data);
-        $this->debugLog('validateResponseModel', $is_valid);
+        try {
+            $this->expectException(VictoriabankException::class);
+            $is_valid = $this->client->validateResponseModel('TransactionResponse', self::$authorize_data);
+            $this->debugLog('validateResponseModel', $is_valid);
 
-        $this->assertFalse($is_valid);
+            $this->assertFalse($is_valid);
+        } catch(\Exception $ex) {
+            $this->debugLog('validateResponseModel', $ex->getMessage());
+            throw $ex;
+        }
     }
 
     public function testValidateSignature()
