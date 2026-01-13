@@ -228,7 +228,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertIsArray($complete_response_data);
         $this->assertNotEmpty($complete_response_data);
 
-        $this->assertTrue($this->client->validateSignature($complete_response_data));
+        $this->assertTrue($this->client->verifySignature($complete_response_data));
 
         $this->assertEquals(VictoriabankClient::TRTYPE_SALES_COMPLETION, $complete_response_data['TRTYPE']);
         $this->assertContainsEquals($complete_response_data['ACTION'], [VictoriabankClient::ACTION_SUCCESS, VictoriabankClient::ACTION_DUPLICATE]);
@@ -261,7 +261,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertIsArray($reverse_response_data);
         $this->assertNotEmpty($reverse_response_data);
 
-        $this->assertTrue($this->client->validateSignature($reverse_response_data));
+        $this->assertTrue($this->client->verifySignature($reverse_response_data));
 
         $this->assertEquals(VictoriabankClient::TRTYPE_REVERSAL, $reverse_response_data['TRTYPE']);
         $this->assertContainsEquals($reverse_response_data['ACTION'], [VictoriabankClient::ACTION_SUCCESS, VictoriabankClient::ACTION_DUPLICATE]);
@@ -313,15 +313,15 @@ class VictoriabankIntegrationTest extends TestCase
         }
     }
 
-    public function testValidateSignature()
+    public function testVerifySignature()
     {
         if (empty(self::$validate_data)) {
             $this->markTestSkipped('VALIDATE DATA is NOT SET');
             return;
         }
 
-        $is_valid = $this->client->validateSignature(self::$validate_data);
-        $this->debugLog('validateSignature', $is_valid);
+        $is_valid = $this->client->verifySignature(self::$validate_data);
+        $this->debugLog('verifySignature', $is_valid);
 
         $this->assertTrue($is_valid);
     }

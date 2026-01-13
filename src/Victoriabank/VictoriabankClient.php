@@ -440,7 +440,7 @@ class VictoriabankClient extends GuzzleClient
         $response_action = $response_data['ACTION'];
         switch ($response_action) {
             case self::ACTION_SUCCESS:
-                return $this->validateSignature($response_data);
+                return $this->verifySignature($response_data);
             case self::ACTION_DUPLICATE:
                 throw new VictoriabankException('Bank response: Duplicate transaction detected');
             case self::ACTION_DECLINED:
@@ -468,7 +468,8 @@ class VictoriabankClient extends GuzzleClient
 
         $private_key_resource = openssl_pkey_get_private($this->merchant_private_key, $this->merchant_private_key_passphrase);
         if ($private_key_resource === false) {
-            throw new VictoriabankException('Invalid private key or passphrase');
+            $error = openssl_error_string();
+            throw new VictoriabankException("Invalid merchant private key or passphrase: $error");
         }
 
         try {
@@ -477,7 +478,7 @@ class VictoriabankClient extends GuzzleClient
 
             if (!$sign_result) {
                 $error = openssl_error_string();
-                throw new VictoriabankException($error);
+                throw new VictoriabankException("Signature generation failed: $error");
             }
 
             return strtoupper(bin2hex($signature));
@@ -494,14 +495,15 @@ class VictoriabankClient extends GuzzleClient
      *
      * @throws VictoriabankException
      */
-    public function validateSignature(array $params)
+    public function verifySignature(array $params)
     {
         $mac = self::generateMac($params, self::GATEWAY_PSIGN_PARAMS);
         $signature_bin = hex2bin($params['P_SIGN']);
 
         $public_key_resource = openssl_pkey_get_public($this->bank_public_key);
         if ($public_key_resource === false) {
-            throw new VictoriabankException('Invalid public key');
+            $error = openssl_error_string();
+            throw new VictoriabankException("Invalid bank public key: $error");
         }
 
         try {
@@ -509,7 +511,7 @@ class VictoriabankClient extends GuzzleClient
 
             if ($verify_result === -1) {
                 $error = openssl_error_string();
-                throw new VictoriabankException($error);
+                throw new VictoriabankException("Signature verification failed: $error");
             }
 
             return $verify_result === 1;
