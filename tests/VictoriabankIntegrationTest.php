@@ -288,7 +288,25 @@ class VictoriabankIntegrationTest extends TestCase
         file_put_contents(__DIR__ . '/testCheck.html', $html);
     }
 
-    public function testValidate()
+    public function testValidateResponseModel()
+    {
+        if (empty(self::$validate_data)) {
+            $this->markTestSkipped('VALIDATE DATA is NOT SET');
+            return;
+        }
+
+        $is_valid = $this->client->validateResponseModel('TransactionResponse', self::$validate_data);
+        $this->debugLog('validateResponseModel', $is_valid);
+
+        $this->assertTrue($is_valid);
+
+        $is_valid = $this->client->validateResponseModel('TransactionResponse', self::$authorize_data);
+        $this->debugLog('validateResponseModel', $is_valid);
+
+        $this->assertFalse($is_valid);
+    }
+
+    public function testValidateSignature()
     {
         if (empty(self::$validate_data)) {
             $this->markTestSkipped('VALIDATE DATA is NOT SET');

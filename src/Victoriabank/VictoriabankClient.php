@@ -9,6 +9,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Command\Guzzle\DescriptionInterface;
 use GuzzleHttp\Command\Guzzle\GuzzleClient;
 use GuzzleHttp\Command\Guzzle\Handler\ValidatedDescriptionHandler;
+use GuzzleHttp\Command\Guzzle\SchemaValidator;
 use GuzzleHttp\Command\Result;
 use GuzzleHttp\Promise\FulfilledPromise;
 
@@ -300,26 +301,6 @@ class VictoriabankClient extends GuzzleClient
         $args['P_SIGN'] = $this->generateSignature($args);
     }
 
-    protected function validateOperationArgsExecute(string $name, array $args)
-    {
-        $command = $this->getCommand($name, $args);
-        $command->getHandlerStack()->setHandler(function () {
-            return new FulfilledPromise(new Result());
-        });
-
-        $this->execute($command);
-    }
-
-    protected function validateOperationArgsValidator(string $name, array $args)
-    {
-        $description = $this->getDescription();
-        $command = $this->getCommand($name, $args);
-
-        $validation_handler = new ValidatedDescriptionHandler($description);
-        $validator = $validation_handler(function () {});
-        $validator($command, null);
-    }
-
     /**
      * Merchant order ID (6-32 characters)
      */
@@ -409,7 +390,38 @@ class VictoriabankClient extends GuzzleClient
     }
     //endregion
 
-    //region Reference
+    //region Validation
+    protected function validateOperationArgsExecute(string $name, array $args)
+    {
+        $command = $this->getCommand($name, $args);
+        $command->getHandlerStack()->setHandler(function () {
+            return new FulfilledPromise(new Result());
+        });
+
+        $this->execute($command);
+    }
+
+    protected function validateOperationArgsValidator(string $name, array $args)
+    {
+        $description = $this->getDescription();
+        $command = $this->getCommand($name, $args);
+
+        $validation_handler = new ValidatedDescriptionHandler($description);
+        $validator = $validation_handler(function () {});
+        $validator($command, null);
+    }
+
+    public function validateResponseModel(string $name, array $response)
+    {
+        $description = $this->getDescription();
+        $model = $description->getModel($name);
+
+        $validator = new SchemaValidator();
+        $isValid = $validator->validate($model, $response);
+
+        return $isValid;
+    }
+
     /**
      * Validates bank response status and signature
      *

@@ -319,59 +319,72 @@ class VictoriabankDescription extends Description
                         'TERMINAL' => [
                             'type' => 'string',
                             'description' => 'Terminal ID (echo from request)',
+                            'required' => true,
                         ],
                         'TRTYPE' => [
                             'type' => 'string',
                             'description' => 'Transaction type (echo from request)',
+                            'required' => true,
                         ],
                         'ORDER' => [
                             'type' => 'string',
                             'description' => 'Order ID (echo from request)',
+                            'required' => true,
                         ],
                         'AMOUNT' => [
                             'type' => 'string',
                             'description' => 'Amount (echo from request)',
+                            'required' => true,
                         ],
                         'CURRENCY' => [
                             'type' => 'string',
                             'description' => 'Currency (echo from request)',
+                            'required' => true,
                         ],
                         'ACTION' => [
                             'type' => 'string',
                             'description' => 'E-Gateway action code: 0 – Transaction successfully completed; 1 – Duplicate transaction detected; 2 – Transaction declined; 3 – Transaction processing fault.',
-                            // 'enum' => ['0', '1', '2', '3'],
+                            'required' => true,
                         ],
                         'RC' => [
                             'type' => 'string',
                             'description' => 'Transaction response code (ISO-8583 Field 39)',
+                            'required' => true,
                         ],
                         'APPROVAL' => [
                             'type' => 'string',
                             'description' => 'Client bank’s approval code (ISO-8583 Field 38). Can be empty if not provided by card management system.',
+                            'required' => true,
                         ],
                         'RRN' => [
                             'type' => 'string',
                             'description' => 'Merchant bank’s retrieval reference number (ISO-8583 Field 37).',
+                            'required' => true,
                         ],
                         'INT_REF' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway internal reference number',
+                            'required' => true,
                         ],
                         'TIMESTAMP' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway timestamp in GMT: YYYYMMDDHHMMSS',
+                            'required' => true,
                         ],
                         'NONCE' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway nonce value. Will be filled with 8-32 unpredictable random bytes in hexadecimal format. Will be present if MAC is used.',
+                            'required' => true,
                         ],
                         'P_SIGN' => [
                             'type' => 'string',
                             'description' => 'E-Commerce gateway MAC (Message Authentication Code) in hexadecimal form. Will be present if MAC is used.',
+                            'required' => true,
                         ],
                         'ECI' => [
                             'type' => 'string',
                             'description' => 'Electronic Commerce Indicator (ECI): ECI=empty – Technical fault; ECI=05 - Secure electronic commerce transaction (fully 3-D Secure authenticated); ECI=06 - Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program; ECI=07 - Non-authenticated Security Transaction',
+                            'required' => true,
                         ],
                     ],
                 ],
