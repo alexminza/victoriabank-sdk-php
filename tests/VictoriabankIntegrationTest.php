@@ -32,6 +32,7 @@ class VictoriabankIntegrationTest extends TestCase
     // Shared state
     protected static $authorize_data;
     protected static $complete_data;
+    protected static $validate_data;
 
     protected static $rrn;
     protected static $int_ref;
@@ -64,8 +65,13 @@ class VictoriabankIntegrationTest extends TestCase
         }
 
         // TEST DATA
-        self::$rrn     = getenv('VB_TEST_RRN');
-        self::$int_ref = getenv('VB_TEST_INT_REF');
+        $test_validate = './tests/testValidate.json';
+        if (file_exists($test_validate)) {
+            self::$validate_data = json_decode(file_get_contents($test_validate), true);
+
+            self::$rrn     = self::$validate_data['RRN'];
+            self::$int_ref = self::$validate_data['INT_REF'];
+        }
     }
 
     protected function setUp(): void
@@ -171,7 +177,7 @@ class VictoriabankIntegrationTest extends TestCase
     public function testComplete()
     {
         if (empty(self::$rrn) || empty(self::$int_ref)) {
-            $this->markTestIncomplete('RRN and INT_REF are NOT SET');
+            $this->markTestSkipped('RRN and INT_REF are NOT SET');
             return;
         }
 
@@ -199,13 +205,8 @@ class VictoriabankIntegrationTest extends TestCase
      */
     public function testReverse()
     {
-        if (empty(self::$rrn) || empty(self::$int_ref)) {
-            $this->markTestIncomplete('RRN and INT_REF are NOT SET');
-            return;
-        }
-
         if (empty(self::$complete_data)) {
-            $this->markTestIncomplete('COMPLETE DATA is NOT SET');
+            $this->markTestSkipped('COMPLETE DATA is NOT SET');
             return;
         }
 
@@ -245,8 +246,12 @@ class VictoriabankIntegrationTest extends TestCase
 
     public function testValidate()
     {
-        $callback_data = json_decode(file_get_contents('./tests/testValidate.json'), true);
-        $is_valid = $this->client->validateSignature($callback_data);
+        if (empty(self::$validate_data)) {
+            $this->markTestSkipped('VALIDATE DATA is NOT SET');
+            return;
+        }
+
+        $is_valid = $this->client->validateSignature(self::$validate_data);
         $this->debugLog('validateSignature', $is_valid);
 
         $this->assertTrue($is_valid);
