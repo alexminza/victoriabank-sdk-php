@@ -65,9 +65,9 @@ class VictoriabankIntegrationTest extends TestCase
         }
 
         // TEST DATA
-        $test_validate = './tests/testValidate.json';
-        if (file_exists($test_validate)) {
-            self::$validate_data = json_decode(file_get_contents($test_validate), true);
+        $test_validate_file = __DIR__ . '/testValidate.json';
+        if (file_exists($test_validate_file)) {
+            self::$validate_data = json_decode(file_get_contents($test_validate_file), true);
 
             self::$rrn     = self::$validate_data['RRN'];
             self::$int_ref = self::$validate_data['INT_REF'];
@@ -192,7 +192,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertNotEmpty($authorize_request);
 
         $html = $this->client->generateHtmlForm(self::$baseUri, $authorize_request);
-        file_put_contents('./tests/testAuthorize.html', $html);
+        file_put_contents(__DIR__ . '/testAuthorize.html', $html);
     }
 
     /**
@@ -221,7 +221,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertNotEmpty($complete_response['body']);
 
         $html = $complete_response['body'];
-        file_put_contents('./tests/testComplete.html', $html);
+        file_put_contents(__DIR__ . '/testComplete.html', $html);
 
         $complete_response_data = $this->parseResponseForm($html);
         $this->assertIsArray($complete_response_data);
@@ -254,7 +254,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertNotEmpty($reverse_response['body']);
 
         $html = $reverse_response['body'];
-        file_put_contents('./tests/testReverse.html', $html);
+        file_put_contents(__DIR__ . '/testReverse.html', $html);
 
         $reverse_response_data = $this->parseResponseForm($html);
         $this->assertIsArray($reverse_response_data);
@@ -285,7 +285,7 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertNotEmpty($check_response['body']);
 
         $html = $check_response['body'];
-        file_put_contents('./tests/testCheck.html', $html);
+        file_put_contents(__DIR__ . '/testCheck.html', $html);
     }
 
     public function testValidate()
