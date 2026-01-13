@@ -433,23 +433,7 @@ class VictoriabankClient extends GuzzleClient
     {
         $this->validateResponseModel('TransactionResponse', $response_data);
 
-        if (!isset($response_data['ACTION'])) {
-            throw new VictoriabankException('Invalid bank response status');
-        }
-
-        $response_action = $response_data['ACTION'];
-        switch ($response_action) {
-            case self::ACTION_SUCCESS:
-                return $this->verifySignature($response_data);
-            case self::ACTION_DUPLICATE:
-                throw new VictoriabankException('Bank response: Duplicate transaction detected');
-            case self::ACTION_DECLINED:
-                throw new VictoriabankException('Bank response: Transaction declined');
-            case self::ACTION_FAULT:
-                throw new VictoriabankException('Bank response: Transaction processing fault');
-            default:
-                throw new VictoriabankException('Unknown bank response status');
-        }
+        return $this->verifySignature($response_data);
     }
     //endregion
 
