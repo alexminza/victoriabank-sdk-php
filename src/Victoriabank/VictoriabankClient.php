@@ -455,23 +455,25 @@ class VictoriabankClient extends GuzzleClient
             throw new Exception('Invalid private key or passphrase');
         }
 
-        switch ($this->signature_algo) {
-            case self::P_SIGN_HASH_ALGO_MD5:
-                $signature = self::createSignatureMd5($mac, $private_key_resource);
-                break;
-            case self::P_SIGN_HASH_ALGO_SHA256:
-                $signature = self::createSignatureSha256($mac, $private_key_resource);
-                break;
-            default:
-                throw new Exception('Unknown P_SIGN hashing algorithm');
-        }
+        try {
+            switch ($this->signature_algo) {
+                case self::P_SIGN_HASH_ALGO_MD5:
+                    $signature = self::createSignatureMd5($mac, $private_key_resource);
+                    break;
+                case self::P_SIGN_HASH_ALGO_SHA256:
+                    $signature = self::createSignatureSha256($mac, $private_key_resource);
+                    break;
+                default:
+                    throw new Exception('Unknown P_SIGN hashing algorithm');
+            }
 
-        if (PHP_VERSION_ID < 80000) {
-            // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP_VERSION_ID check performed before invocation.
-            openssl_free_key($private_key_resource);
+            return strtoupper(bin2hex($signature));
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP_VERSION_ID check performed before invocation.
+                openssl_free_key($private_key_resource);
+            }
         }
-
-        return strtoupper(bin2hex($signature));
     }
 
     /**
@@ -489,18 +491,25 @@ class VictoriabankClient extends GuzzleClient
             throw new Exception('Invalid public key');
         }
 
-        switch ($this->signature_algo) {
-            case self::P_SIGN_HASH_ALGO_MD5:
-                $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_MD5, self::VB_SIGNATURE_MD5_PREFIX);
-                break;
-            case self::P_SIGN_HASH_ALGO_SHA256:
-                $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_SHA256, self::VB_SIGNATURE_SHA256_PREFIX);
-                break;
-            default:
-                throw new Exception('Unknown P_SIGN hashing algorithm');
-        }
+        try {
+            switch ($this->signature_algo) {
+                case self::P_SIGN_HASH_ALGO_MD5:
+                    $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_MD5, self::VB_SIGNATURE_MD5_PREFIX);
+                    break;
+                case self::P_SIGN_HASH_ALGO_SHA256:
+                    $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_SHA256, self::VB_SIGNATURE_SHA256_PREFIX);
+                    break;
+                default:
+                    throw new Exception('Unknown P_SIGN hashing algorithm');
+            }
 
-        return $is_valid;
+            return $is_valid;
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP_VERSION_ID check performed before invocation.
+                openssl_free_key($public_key_resource);
+            }
+        }
     }
 
     /**
