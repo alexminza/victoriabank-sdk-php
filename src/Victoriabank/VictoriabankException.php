@@ -7,6 +7,6 @@ namespace Victoriabank\Victoriabank;
 /**
  * Victoriabank exception
  */
-class Exception extends \Exception
+class VictoriabankException extends \Exception
 {
 }

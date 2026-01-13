@@ -417,20 +417,24 @@ class VictoriabankClient extends GuzzleClient
         $model = $description->getModel($name);
 
         $validator = new SchemaValidator();
-        $isValid = $validator->validate($model, $response);
+        $is_valid = $validator->validate($model, $response);
 
-        return $isValid;
+        if (!$is_valid) {
+            throw new VictoriabankException('Validation errors: ' . implode("\n", $validator->getErrors()));
+        }
+
+        return $is_valid;
     }
 
     /**
      * Validates bank response status and signature
      *
-     * @throws Exception
+     * @throws VictoriabankException
      */
     public function validateResponse(array $response_data)
     {
         if (!isset($response_data['ACTION'])) {
-            throw new Exception('Invalid bank response status');
+            throw new VictoriabankException('Invalid bank response status');
         }
 
         $response_action = $response_data['ACTION'];
@@ -438,13 +442,13 @@ class VictoriabankClient extends GuzzleClient
             case self::ACTION_SUCCESS:
                 return $this->validateSignature($response_data);
             case self::ACTION_DUPLICATE:
-                throw new Exception('Bank response: Duplicate transaction detected');
+                throw new VictoriabankException('Bank response: Duplicate transaction detected');
             case self::ACTION_DECLINED:
-                throw new Exception('Bank response: Transaction declined');
+                throw new VictoriabankException('Bank response: Transaction declined');
             case self::ACTION_FAULT:
-                throw new Exception('Bank response: Transaction processing fault');
+                throw new VictoriabankException('Bank response: Transaction processing fault');
             default:
-                throw new Exception('Unknown bank response status');
+                throw new VictoriabankException('Unknown bank response status');
         }
     }
     //endregion
@@ -456,7 +460,7 @@ class VictoriabankClient extends GuzzleClient
     /**
      * Generates payment gateway request data P_SIGN signature.
      *
-     * @throws Exception
+     * @throws VictoriabankException
      */
     public function generateSignature(array $params)
     {
@@ -464,7 +468,7 @@ class VictoriabankClient extends GuzzleClient
 
         $private_key_resource = openssl_pkey_get_private($this->merchant_private_key, $this->merchant_private_key_passphrase);
         if ($private_key_resource === false) {
-            throw new Exception('Invalid private key or passphrase');
+            throw new VictoriabankException('Invalid private key or passphrase');
         }
 
         try {
@@ -476,7 +480,7 @@ class VictoriabankClient extends GuzzleClient
                     $signature = self::createSignatureSha256($mac, $private_key_resource);
                     break;
                 default:
-                    throw new Exception('Unknown P_SIGN hashing algorithm');
+                    throw new VictoriabankException('Unknown P_SIGN hashing algorithm');
             }
 
             return strtoupper(bin2hex($signature));
@@ -491,7 +495,7 @@ class VictoriabankClient extends GuzzleClient
     /**
      * Validates payment gateway response data P_SIGN signature.
      *
-     * @throws Exception
+     * @throws VictoriabankException
      */
     public function validateSignature(array $params)
     {
@@ -500,7 +504,7 @@ class VictoriabankClient extends GuzzleClient
 
         $public_key_resource = openssl_pkey_get_public($this->bank_public_key);
         if ($public_key_resource === false) {
-            throw new Exception('Invalid public key');
+            throw new VictoriabankException('Invalid public key');
         }
 
         try {
@@ -512,7 +516,7 @@ class VictoriabankClient extends GuzzleClient
                     $is_valid = $this->verifySignature($mac, $signature_bin, $public_key_resource, self::P_SIGN_HASH_ALGO_SHA256, self::VB_SIGNATURE_SHA256_PREFIX);
                     break;
                 default:
-                    throw new Exception('Unknown P_SIGN hashing algorithm');
+                    throw new VictoriabankException('Unknown P_SIGN hashing algorithm');
             }
 
             return $is_valid;
@@ -552,7 +556,7 @@ class VictoriabankClient extends GuzzleClient
      * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
      * Appendix A: P_SIGN creation/verification in the Merchant System
      *
-     * @throws Exception
+     * @throws VictoriabankException
      */
     protected static function generateMac(array $params, array $psign_params)
     {
@@ -564,7 +568,7 @@ class VictoriabankClient extends GuzzleClient
 
             // Strict check for null/empty string to allow "0"
             if ($val === '') {
-                throw new Exception("Empty P_SIGN parameter: $key");
+                throw new VictoriabankException("Empty P_SIGN parameter: $key");
             }
 
             $mac .= strlen($val) . $val;
@@ -590,7 +594,7 @@ class VictoriabankClient extends GuzzleClient
 
         if (!$encrypt_result) {
             $error = openssl_error_string();
-            throw new Exception($error);
+            throw new VictoriabankException($error);
         }
 
         return $signature;
@@ -603,7 +607,7 @@ class VictoriabankClient extends GuzzleClient
 
         if (!$sign_result) {
             $error = openssl_error_string();
-            throw new Exception($error);
+            throw new VictoriabankException($error);
         }
 
         return $signature;

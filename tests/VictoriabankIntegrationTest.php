@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Victoriabank\Victoriabank\Tests;
 
 use Victoriabank\Victoriabank\VictoriabankClient;
+use Victoriabank\Victoriabank\VictoriabankException;
 use GuzzleHttp\Client;
 use PHPUnit\Framework\TestCase;
 
@@ -300,6 +301,7 @@ class VictoriabankIntegrationTest extends TestCase
 
         $this->assertTrue($is_valid);
 
+        $this->expectException(VictoriabankException::class);
         $is_valid = $this->client->validateResponseModel('TransactionResponse', self::$authorize_data);
         $this->debugLog('validateResponseModel', $is_valid);
 
