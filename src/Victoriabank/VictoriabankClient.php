@@ -411,7 +411,7 @@ class VictoriabankClient extends GuzzleClient
         $validator($command, null);
     }
 
-    public function validateResponseModel(string $name, array $response)
+    protected function validateResponseModel(string $name, array $response)
     {
         $description = $this->getDescription();
         $model = $description->getModel($name);
@@ -422,8 +422,6 @@ class VictoriabankClient extends GuzzleClient
         if (!$is_valid) {
             throw new VictoriabankException('Validation errors: ' . implode("\n", $validator->getErrors()));
         }
-
-        return $is_valid;
     }
 
     /**
@@ -433,6 +431,8 @@ class VictoriabankClient extends GuzzleClient
      */
     public function validateResponse(array $response_data)
     {
+        $this->validateResponseModel('TransactionResponse', $response_data);
+
         if (!isset($response_data['ACTION'])) {
             throw new VictoriabankException('Invalid bank response status');
         }
