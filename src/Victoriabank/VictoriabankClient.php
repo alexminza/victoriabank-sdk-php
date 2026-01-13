@@ -27,10 +27,12 @@ class VictoriabankClient extends GuzzleClient
     public const TRTYPE_REVERSAL         = '24';
     public const TRTYPE_CHECK            = '90';
 
-    public const ACTION_SUCCESS   = 0;
-    public const ACTION_DUPLICATE = 1;
-    public const ACTION_DECLINED  = 2;
-    public const ACTION_FAULT     = 3;
+    public const ACTION_SUCCESS   = '0';
+    public const ACTION_DUPLICATE = '1';
+    public const ACTION_DECLINED  = '2';
+    public const ACTION_FAULT     = '3';
+
+    public const RESULT_SUCCESS = '00';
 
     public const P_SIGN_HASH_ALGO_MD5    = 'md5';
     public const P_SIGN_HASH_ALGO_SHA256 = 'sha256';
@@ -419,7 +421,7 @@ class VictoriabankClient extends GuzzleClient
             throw new Exception('Invalid bank response status');
         }
 
-        $response_action = (int) $response_data['ACTION'];
+        $response_action = $response_data['ACTION'];
         switch ($response_action) {
             case self::ACTION_SUCCESS:
                 return $this->validateSignature($response_data);

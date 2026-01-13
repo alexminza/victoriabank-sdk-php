@@ -136,6 +136,30 @@ class VictoriabankIntegrationTest extends TestCase
         error_log("$message: $data_print");
     }
 
+    protected static function parseResponseForm(string $html)
+    {
+        return self::parseResponseRegex($html, '/<input.+name="(\w+)".+value="(.*?)"/i');
+    }
+
+    protected static function parseResponseRegex(string $response, string $regex)
+    {
+        $match_result = preg_match_all($regex, $response, $matches, PREG_SET_ORDER);
+        if (empty($match_result)) {
+            return null;
+        }
+
+        $vbdata = [];
+        foreach ($matches as $match) {
+            if (count($match) === 3) {
+                $name = $match[1];
+                $value = $match[2];
+                $vbdata[$name] = $value;
+            }
+        }
+
+        return $vbdata;
+    }
+
     public function testAuthorize()
     {
         $order_id = '123';
@@ -198,6 +222,16 @@ class VictoriabankIntegrationTest extends TestCase
 
         $html = $complete_response['body'];
         file_put_contents('./tests/testComplete.html', $html);
+
+        $complete_response_data = $this->parseResponseForm($html);
+        $this->assertIsArray($complete_response_data);
+        $this->assertNotEmpty($complete_response_data);
+
+        $this->assertTrue($this->client->validateSignature($complete_response_data));
+
+        $this->assertEquals(VictoriabankClient::TRTYPE_SALES_COMPLETION, $complete_response_data['TRTYPE']);
+        $this->assertContainsEquals($complete_response_data['ACTION'], [VictoriabankClient::ACTION_SUCCESS, VictoriabankClient::ACTION_DUPLICATE]);
+        $this->assertEquals(VictoriabankClient::RESULT_SUCCESS, $complete_response_data['RC']);
     }
 
     /**
@@ -221,6 +255,16 @@ class VictoriabankIntegrationTest extends TestCase
 
         $html = $reverse_response['body'];
         file_put_contents('./tests/testReverse.html', $html);
+
+        $reverse_response_data = $this->parseResponseForm($html);
+        $this->assertIsArray($reverse_response_data);
+        $this->assertNotEmpty($reverse_response_data);
+
+        $this->assertTrue($this->client->validateSignature($reverse_response_data));
+
+        $this->assertEquals(VictoriabankClient::TRTYPE_REVERSAL, $reverse_response_data['TRTYPE']);
+        $this->assertContainsEquals($reverse_response_data['ACTION'], [VictoriabankClient::ACTION_SUCCESS, VictoriabankClient::ACTION_DUPLICATE]);
+        $this->assertEquals(VictoriabankClient::RESULT_SUCCESS, $reverse_response_data['RC']);
     }
 
     /**
