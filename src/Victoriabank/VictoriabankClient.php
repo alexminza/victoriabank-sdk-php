@@ -316,7 +316,7 @@ class VictoriabankClient extends GuzzleClient
         $command = $this->getCommand($name, $args);
 
         $validation_handler = new ValidatedDescriptionHandler($description);
-        $validator = $validation_handler(function(){});
+        $validator = $validation_handler(function () {});
         $validator($command, null);
     }
 
@@ -574,7 +574,12 @@ class VictoriabankClient extends GuzzleClient
         // The specification describes manual padding, but openssl_private_encrypt
         // handles this automatically with the OPENSSL_PKCS1_PADDING flag.
         $signature = '';
-        openssl_private_encrypt($signed_data, $signature, $private_key_resource, OPENSSL_PKCS1_PADDING);
+        $encrypt_result = openssl_private_encrypt($signed_data, $signature, $private_key_resource, OPENSSL_PKCS1_PADDING);
+
+        if (!$encrypt_result) {
+            $error = openssl_error_string();
+            throw new Exception($error);
+        }
 
         return $signature;
     }
@@ -582,7 +587,12 @@ class VictoriabankClient extends GuzzleClient
     protected static function createSignatureSha256(string $mac, $private_key_resource)
     {
         $signature = '';
-        openssl_sign($mac, $signature, $private_key_resource, OPENSSL_ALGO_SHA256);
+        $sign_result = openssl_sign($mac, $signature, $private_key_resource, OPENSSL_ALGO_SHA256);
+
+        if (!$sign_result) {
+            $error = openssl_error_string();
+            throw new Exception($error);
+        }
 
         return $signature;
     }
