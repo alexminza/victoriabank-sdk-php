@@ -103,6 +103,8 @@ try {
     if ($isValid) {
         // Payment authorized/completed successfully
         // Process the order (e.g. update status in DB)
+        $rrn     = $_POST['RRN'];
+        $int_ref = $_POST['INT_REF'];
     }
 } catch (\Exception $e) {
     // Handle error (e.g. log error, invalid signature, duplicate transaction, declined)
@@ -113,9 +115,6 @@ try {
 ### Complete authorized payment
 
 ```php
-$rrn = '';
-$int_ref = '';
-
 $completeResponse = $vbClient->orderComplete(
     '123',
     123.45,
