@@ -520,6 +520,10 @@ class VictoriabankClient extends GuzzleClient
         $mac = self::generateMac($params, self::GATEWAY_PSIGN_PARAMS);
         $signature_bin = hex2bin($params['P_SIGN']);
 
+        if ($signature_bin === false) {
+            throw new VictoriabankException('Invalid P_SIGN value');
+        }
+
         $public_key_resource = openssl_pkey_get_public($this->bank_public_key);
         if ($public_key_resource === false) {
             $error = openssl_error_string();
