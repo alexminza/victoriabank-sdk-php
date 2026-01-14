@@ -196,6 +196,21 @@ class VictoriabankIntegrationTest extends TestCase
         file_put_contents(__DIR__ . '/testAuthorize.html', $html);
     }
 
+    public function testAuthorizeModelValidation()
+    {
+        $authorize_data = self::$authorize_data;
+        $authorize_data['CURRENCY'] = 'MDLUSD';
+
+        try {
+            $this->expectException(\GuzzleHttp\Command\Exception\CommandException::class);
+            $authorize_request = $this->client->generateAuthorizeRequest($authorize_data);
+            $this->debugLog('generateAuthorizeRequest', $authorize_request);
+        } catch(\Exception $ex) {
+            $this->debugLog('generateAuthorizeRequest', $ex->getMessage());
+            throw $ex;
+        }
+    }
+
     /**
      * @depends testAuthorize
      */

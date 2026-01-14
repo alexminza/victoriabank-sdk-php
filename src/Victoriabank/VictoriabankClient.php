@@ -404,11 +404,20 @@ class VictoriabankClient extends GuzzleClient
     protected function validateOperationArgsValidator(string $name, array $args)
     {
         $description = $this->getDescription();
+        $operation = $description->getOperation($name);
         $command = $this->getCommand($name, $args);
 
         $validation_handler = new ValidatedDescriptionHandler($description);
-        $validator = $validation_handler(function () {});
-        $validator($command, null);
+        // $validator = $validation_handler(function () {});
+        // $validator($command, null);
+
+        $validator = $validation_handler(function () {
+            return new FulfilledPromise(new Result());
+        });
+
+        $validator($command, [
+            'operation' => $operation,
+        ]);
     }
 
     protected function validateResponseModel(string $name, array $response)
