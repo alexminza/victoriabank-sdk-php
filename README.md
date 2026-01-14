@@ -102,12 +102,19 @@ try {
     $isValid = $vbClient->validateResponse($_POST);
     if ($isValid) {
         // Payment authorized/completed successfully
-        // Process the order (e.g. update status in DB)
+        // Process the order (e.g. update status)
+
+        // https://rudrastyh.com/wordpress/sanitize-escape-validate.html
+        // https://developer.wordpress.org/apis/security/
+        // https://developer.wordpress.org/apis/security/sanitizing/
         $rrn     = $_POST['RRN'];
         $int_ref = $_POST['INT_REF'];
+    } else {
+        // Handle invalid signature or response data
+        echo 'Error: Invalid response';
     }
 } catch (\Exception $e) {
-    // Handle error (e.g. log error, invalid signature, duplicate transaction, declined)
+    // Handle other errors (e.g. log error, invalid data, duplicate transaction, declined)
     echo 'Error: ' . $e->getMessage();
 }
 ```
