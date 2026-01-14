@@ -70,8 +70,8 @@ class VictoriabankIntegrationTest extends TestCase
         if (file_exists($test_validate_file)) {
             self::$validate_data = json_decode(file_get_contents($test_validate_file), true);
 
-            self::$rrn     = htmlspecialchars(self::$validate_data['RRN'], ENT_QUOTES);
-            self::$int_ref = htmlspecialchars(self::$validate_data['INT_REF'], ENT_QUOTES);
+            self::$rrn     = self::$validate_data['RRN'];
+            self::$int_ref = self::$validate_data['INT_REF'];
         }
     }
 

@@ -104,12 +104,8 @@ try {
         // Payment authorized/completed successfully
         // Process the order (e.g. update status)
 
-        // https://rudrastyh.com/wordpress/sanitize-escape-validate.html
-        // https://developer.wordpress.org/apis/security/
-        // https://developer.wordpress.org/apis/security/sanitizing/
-        // https://www.php.net/manual/en/function.htmlspecialchars.php
-        $rrn     = htmlspecialchars($_POST['RRN'], ENT_QUOTES);
-        $int_ref = htmlspecialchars($_POST['INT_REF'], ENT_QUOTES);
+        $rrn     = $_POST['RRN'];
+        $int_ref = $_POST['INT_REF'];
     } else {
         // Handle invalid signature or response data
         echo 'Error: Invalid response';
