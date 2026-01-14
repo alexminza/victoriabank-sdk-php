@@ -107,8 +107,9 @@ try {
         // https://rudrastyh.com/wordpress/sanitize-escape-validate.html
         // https://developer.wordpress.org/apis/security/
         // https://developer.wordpress.org/apis/security/sanitizing/
-        $rrn     = $_POST['RRN'];
-        $int_ref = $_POST['INT_REF'];
+        // https://www.php.net/manual/en/function.htmlspecialchars.php
+        $rrn     = htmlspecialchars($_POST['RRN'], ENT_QUOTES);
+        $int_ref = htmlspecialchars($_POST['INT_REF'], ENT_QUOTES);
     } else {
         // Handle invalid signature or response data
         echo 'Error: Invalid response';
