@@ -55,12 +55,17 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
-    protected $backref_url;
+    protected $merchant_url;
 
     /**
      * @var string
      */
-    protected $language = self::DEFAULT_LANGUAGE;
+    protected $merchant_name;
+
+    /**
+     * @var string
+     */
+    protected $merchant_address;
 
     /**
      * @var string
@@ -120,12 +125,21 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
-    /**
-     * @link https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
-     */
-    public function setLanguage(string $language)
+    public function setMerchantUrl(string $merchant_url)
     {
-        $this->language = $language;
+        $this->merchant_url = $merchant_url;
+        return $this;
+    }
+
+    public function setMerchantName(string $merchant_name)
+    {
+        $this->merchant_name = $merchant_name;
+        return $this;
+    }
+
+    public function setMerchantAddress(string $merchant_address)
+    {
+        $this->merchant_address = $merchant_address;
         return $this;
     }
 
@@ -165,29 +179,24 @@ class VictoriabankClient extends GuzzleClient
         $this->signature_algo = $signature_algo;
         return $this;
     }
-
-    public function setBackRefUrl(string $backref_url)
-    {
-        $this->backref_url = $backref_url;
-        return $this;
-    }
     //endregion
 
     //region Operations
     /**
      * Authorize payment
+     *
+     * @link https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
      */
-    public function generateOrderAuthorizeRequest(string $order_id, float $amount, string $currency, string $description, string $merchant_name, string $merchant_url, string $merchant_address, string $email)
+    public function generateOrderAuthorizeRequest(string $order_id, float $amount, string $currency, string $description, string $email, string $backref_url, string $language = self::DEFAULT_LANGUAGE)
     {
         $authorize_data = [
             'AMOUNT' => (string) $amount,
             'CURRENCY' => $currency,
             'ORDER' => self::normalizeOrderId($order_id),
             'DESC' => $description,
-            'MERCH_NAME' => $merchant_name,
-            'MERCH_URL' => $merchant_url,
             'EMAIL' => $email,
-            'MERCH_ADDRESS' => $merchant_address,
+            'BACKREF' => $backref_url,
+            'LANG' => $language,
         ];
 
         return $this->generateAuthorizeRequest($authorize_data);
@@ -200,8 +209,9 @@ class VictoriabankClient extends GuzzleClient
 
         $args['MERCH_GMT'] = $this->getTimezoneOffset();
         $args['MERCHANT'] = $this->merchant_id;
-        $args['BACKREF'] = $this->backref_url;
-        $args['LANG'] = $this->language;
+        $args['MERCH_NAME'] = $this->merchant_name;
+        $args['MERCH_URL'] = $this->merchant_url;
+        $args['MERCH_ADDRESS'] = $this->merchant_address;
         $args['COUNTRY'] = $this->country;
 
         $this->setTransactionParams($args);
