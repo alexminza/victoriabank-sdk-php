@@ -185,7 +185,8 @@ class VictoriabankClient extends GuzzleClient
     /**
      * Authorize payment
      *
-     * @link https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     * @link   https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
      */
     public function generateOrderAuthorizeRequest(string $order_id, float $amount, string $currency, string $description, string $email, string $backref_url, string $language = self::DEFAULT_LANGUAGE)
     {
@@ -202,6 +203,11 @@ class VictoriabankClient extends GuzzleClient
         return $this->generateAuthorizeRequest($authorize_data);
     }
 
+    /**
+     * Authorize payment
+     *
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     */
     public function generateAuthorizeRequest(array $authorize_data)
     {
         $args = $authorize_data;
@@ -239,7 +245,7 @@ class VictoriabankClient extends GuzzleClient
         return $this->complete($complete_data);
     }
 
-    public function complete(array $complete_data)
+    public function complete(array $complete_data): Result
     {
         $args = $complete_data;
         $args['TRTYPE'] = self::TRTYPE_SALES_COMPLETION;
@@ -268,7 +274,7 @@ class VictoriabankClient extends GuzzleClient
         return $this->reverse($reverse_data);
     }
 
-    public function reverse(array $reverse_data)
+    public function reverse(array $reverse_data): Result
     {
         $args = $reverse_data;
         $args['TRTYPE'] = self::TRTYPE_REVERSAL;
@@ -291,7 +297,7 @@ class VictoriabankClient extends GuzzleClient
         return $this->check($check_data);
     }
 
-    public function check(array $check_data)
+    public function check(array $check_data): Result
     {
         $args = $check_data;
         $args['TRTYPE'] = self::TRTYPE_CHECK;
@@ -401,6 +407,9 @@ class VictoriabankClient extends GuzzleClient
     //endregion
 
     //region Validation
+    /**
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     */
     protected function validateOperationArgsExecute(string $name, array $args)
     {
         $command = $this->getCommand($name, $args);
@@ -411,6 +420,9 @@ class VictoriabankClient extends GuzzleClient
         $this->execute($command);
     }
 
+    /**
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     */
     protected function validateOperationArgsValidator(string $name, array $args)
     {
         $description = $this->getDescription();
@@ -430,6 +442,9 @@ class VictoriabankClient extends GuzzleClient
         ]);
     }
 
+    /**
+     * @throws VictoriabankException
+     */
     protected function validateResponseModel(string $name, array $response)
     {
         $description = $this->getDescription();
