@@ -352,6 +352,10 @@ class VictoriabankDescription extends Description
                             'description' => 'Transaction response code (ISO-8583 Field 39)',
                             'required' => true,
                         ],
+                        'TEXT' => [
+                            'type' => 'string',
+                            'description' => 'Bank response status text',
+                        ],
                         'APPROVAL' => [
                             'type' => 'string',
                             'description' => 'Client bank’s approval code (ISO-8583 Field 38). Can be empty if not provided by card management system.',
@@ -382,10 +386,23 @@ class VictoriabankDescription extends Description
                             'description' => 'E-Commerce gateway MAC (Message Authentication Code) in hexadecimal form. Will be present if MAC is used.',
                             'required' => true,
                         ],
+                        // https://en.wikipedia.org/wiki/ISO/IEC_7812
+                        // https://en.wikipedia.org/wiki/Payment_card_number#Issuer_identification_number_(IIN)
+                        'BIN' => [
+                            'type' => 'string',
+                            'description' => 'Card Bank Identification Number',
+                        ],
+                        'CARD' => [
+                            'type' => 'string',
+                            'description' => 'Masked card number',
+                        ],
+                        'AUTH' => [
+                            'type' => 'string',
+                            'description' => '',
+                        ],
                         'ECI' => [
                             'type' => 'string',
                             'description' => 'Electronic Commerce Indicator (ECI): ECI=empty – Technical fault; ECI=05 - Secure electronic commerce transaction (fully 3-D Secure authenticated); ECI=06 - Non-authenticated security transaction at a 3-D Secure-capable merchant, and merchant attempted to authenticate the cardholder using 3-D Secure but was unable to complete the authentication because the issuer or cardholder does not participate in the 3-D Secure program; ECI=07 - Non-authenticated Security Transaction',
-                            'required' => true,
                         ],
                     ],
                 ],
