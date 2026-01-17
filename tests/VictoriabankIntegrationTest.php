@@ -247,7 +247,6 @@ class VictoriabankIntegrationTest extends TestCase
 
         $this->assertEquals(VictoriabankClient::TRTYPE_SALES_COMPLETION, $complete_response_data['TRTYPE']);
         // $this->assertContainsEquals($complete_response_data['ACTION'], [VictoriabankClient::ACTION_SUCCESS, VictoriabankClient::ACTION_DUPLICATE]);
-        // $this->assertEquals(VictoriabankClient::RESULT_SUCCESS, $complete_response_data['RC']);
     }
 
     /**
@@ -280,7 +279,6 @@ class VictoriabankIntegrationTest extends TestCase
 
         $this->assertEquals(VictoriabankClient::TRTYPE_REVERSAL, $reverse_response_data['TRTYPE']);
         // $this->assertContainsEquals($reverse_response_data['ACTION'], [VictoriabankClient::ACTION_SUCCESS, VictoriabankClient::ACTION_DUPLICATE]);
-        // $this->assertEquals(VictoriabankClient::RESULT_SUCCESS, $reverse_response_data['RC']);
     }
 
     /**

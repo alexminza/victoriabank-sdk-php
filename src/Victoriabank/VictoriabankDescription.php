@@ -148,7 +148,7 @@ class VictoriabankDescription extends Description
                 'type' => 'string',
                 'location' => 'formParam',
                 'required' => true,
-                'description' => 'Merchant primary web site URL in format http://www.merchantsitename.domain',
+                'description' => 'Merchant primary web site URL in format https://www.merchantsitename.domain',
                 'minLength' => 1,
                 'maxLength' => 250,
             ],
@@ -398,7 +398,6 @@ class VictoriabankDescription extends Description
                         ],
                         'AUTH' => [
                             'type' => 'string',
-                            'description' => '',
                         ],
                         'ECI' => [
                             'type' => 'string',
