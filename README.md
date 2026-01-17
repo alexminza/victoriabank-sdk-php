@@ -67,12 +67,13 @@ $vbClient = new VictoriabankClient($guzzleClient);
 $vbClient
     ->setMerchantId($VB_MERCHANT_ID)
     ->setTerminalId($VB_TERMINAL_ID)
-    ->setLanguage('en')
+    ->setMerchantName('TEST COMPANY SRL')
+    ->setMerchantUrl('https://www.example.com')
+    ->setMerchantAddress('Chisinau, Moldova')
     ->setTimezone('Europe/Chisinau')
     ->setMerchantPrivateKey($VB_MERCHANT_PRIVATE_KEY, $VB_MERCHANT_PRIVATE_KEY_PASSPHRASE)
     ->setBankPublicKey($VB_BANK_PUBLIC_KEY)
-    ->setSignatureAlgo(VictoriabankClient::P_SIGN_HASH_ALGO_SHA256)
-    ->setBackRefUrl('https://www.example.com');
+    ->setSignatureAlgo(VictoriabankClient::P_SIGN_HASH_ALGO_SHA256);
 ```
 
 ## SDK usage examples
@@ -85,10 +86,9 @@ $authorizeRequest = $vbClient->generateOrderAuthorizeRequest(
     123.45,
     'MDL',
     'Order #123',
-    'TEST COMPANY SRL',
+    'example@example.com',
     'https://www.example.com',
-    'Chisinau, Moldova',
-    'example@example.com'
+    'ro'
 );
 
 $html = $vbClient->generateHtmlForm($VB_BASE_URI, $authorizeRequest);

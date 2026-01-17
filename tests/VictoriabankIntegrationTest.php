@@ -101,12 +101,13 @@ class VictoriabankIntegrationTest extends TestCase
         $this->client
             ->setMerchantId(self::$merchant_id)
             ->setTerminalId(self::$terminal_id)
-            ->setLanguage('ro')
+            ->setMerchantName(self::$merchant_name)
+            ->setMerchantUrl(self::$merchant_url)
+            ->setMerchantAddress(self::$merchant_address)
             ->setTimezone('Europe/Chisinau')
             ->setMerchantPrivateKey(self::$merchant_private_key, self::$merchant_private_key_passphrase)
             ->setBankPublicKey(self::$bank_public_key)
-            ->setSignatureAlgo(self::$signature_algo)
-            ->setBackRefUrl(self::$backref_url);
+            ->setSignatureAlgo(self::$signature_algo);
     }
 
     protected function onNotSuccessfulTest(\Throwable $t): void
@@ -182,10 +183,9 @@ class VictoriabankIntegrationTest extends TestCase
             $amount,
             self::$authorize_data['CURRENCY'],
             self::$authorize_data['DESC'],
-            self::$merchant_name,
-            self::$merchant_url,
-            self::$merchant_address,
-            self::$authorize_data['EMAIL']
+            self::$authorize_data['EMAIL'],
+            self::$backref_url,
+            'ro'
         );
         $this->debugLog('generateAuthorizeRequest', $authorize_request);
 
