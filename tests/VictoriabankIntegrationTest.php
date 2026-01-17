@@ -313,7 +313,10 @@ class VictoriabankIntegrationTest extends TestCase
         $this->debugLog('validateResponse', $is_valid);
 
         $this->assertTrue($is_valid);
+    }
 
+    public function testValidateBadResponse()
+    {
         try {
             $this->expectException(VictoriabankException::class);
             $is_valid = $this->client->validateResponse(self::$authorize_data);
