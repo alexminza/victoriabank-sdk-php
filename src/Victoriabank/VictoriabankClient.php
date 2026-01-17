@@ -28,12 +28,22 @@ class VictoriabankClient extends GuzzleClient
     public const TRTYPE_REVERSAL         = '24';
     public const TRTYPE_CHECK            = '90';
 
-    public const ACTION_SUCCESS   = '0';
+    /**
+     * Transaction successfully completed
+     */
+    public const ACTION_SUCCESS = '0';
+    /**
+     * Duplicate transaction detected
+     */
     public const ACTION_DUPLICATE = '1';
-    public const ACTION_DECLINED  = '2';
-    public const ACTION_FAULT     = '3';
-
-    public const RESULT_SUCCESS = '00';
+    /**
+     * Transaction declined
+     */
+    public const ACTION_DECLINED = '2';
+    /**
+     * Transaction processing fault
+     */
+    public const ACTION_FAULT = '3';
 
     public const P_SIGN_HASH_ALGO_MD5    = 'md5';
     public const P_SIGN_HASH_ALGO_SHA256 = 'sha256';
@@ -55,12 +65,17 @@ class VictoriabankClient extends GuzzleClient
     /**
      * @var string
      */
-    protected $backref_url;
+    protected $merchant_url;
 
     /**
      * @var string
      */
-    protected $language = self::DEFAULT_LANGUAGE;
+    protected $merchant_name;
+
+    /**
+     * @var string
+     */
+    protected $merchant_address;
 
     /**
      * @var string
@@ -108,12 +123,18 @@ class VictoriabankClient extends GuzzleClient
     }
 
     //region Set config
+    /**
+     * Merchant ID assigned by bank
+     */
     public function setMerchantId(string $merchant_id)
     {
         $this->merchant_id = $merchant_id;
         return $this;
     }
 
+    /**
+     * Merchant Terminal ID assigned by bank
+     */
     public function setTerminalId(string $terminal_id)
     {
         $this->terminal_id = $terminal_id;
@@ -121,15 +142,36 @@ class VictoriabankClient extends GuzzleClient
     }
 
     /**
-     * @link https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
+     * Merchant primary web site URL in format https://www.merchantsitename.domain
      */
-    public function setLanguage(string $language)
+    public function setMerchantUrl(string $merchant_url)
     {
-        $this->language = $language;
+        $this->merchant_url = $merchant_url;
         return $this;
     }
 
     /**
+     * Merchant name (recognizable by cardholder)
+     */
+    public function setMerchantName(string $merchant_name)
+    {
+        $this->merchant_name = $merchant_name;
+        return $this;
+    }
+
+    /**
+     * Merchant company registered office address
+     */
+    public function setMerchantAddress(string $merchant_address)
+    {
+        $this->merchant_address = $merchant_address;
+        return $this;
+    }
+
+    /**
+     * Merchant shop 2-character country code.
+     * Must be provided if merchant system is located in a country other than the gateway server's country.
+     *
      * @link https://en.wikipedia.org/wiki/ISO_3166-1
      */
     public function setCountry(string $country)
@@ -139,6 +181,9 @@ class VictoriabankClient extends GuzzleClient
     }
 
     /**
+     * Merchant time zone.
+     * Must be provided if merchant system is located in a time zone other than the gateway server's time zone.
+     *
      * @link https://www.php.net/manual/en/timezones.php
      */
     public function setTimezone(string $timezone)
@@ -147,6 +192,14 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
+    /**
+     * @param string $merchant_private_key
+     * 1. a string having the format `file://path/to/file.pem`. The named file must contain a PEM encoded certificate/private key (it may contain both).
+     * 2. a PEM formatted private key.
+     * @param null|string $merchant_private_key_passphrase Must be used if the specified key is encrypted (protected by a passphrase).
+     *
+     * @link https://www.php.net/manual/en/function.openssl-pkey-get-private.php
+     */
     public function setMerchantPrivateKey(string $merchant_private_key, ?string $merchant_private_key_passphrase = null)
     {
         $this->merchant_private_key = $merchant_private_key;
@@ -154,21 +207,33 @@ class VictoriabankClient extends GuzzleClient
         return $this;
     }
 
+    /**
+     * @param string $bank_public_key
+     * 1. a string having the format `file://path/to/file.pem`. The named file must contain a PEM encoded certificate/public key (it may contain both).
+     * 2. a PEM formatted public key.
+     *
+     * @link https://www.php.net/manual/en/function.openssl-pkey-get-public.php
+     */
     public function setBankPublicKey(string $bank_public_key)
     {
         $this->bank_public_key = $bank_public_key;
         return $this;
     }
 
+    /**
+     * P_SIGN signature algorithm provided by the bank.
+     *
+     * @param string $signature_algo
+     *
+     * @see P_SIGN_HASH_ALGO_SHA256
+     * @see P_SIGN_HASH_ALGO_MD5
+     *
+     * @link https://www.php.net/manual/en/function.openssl-sign.php
+     * @link https://www.php.net/manual/en/function.openssl-verify.php
+     */
     public function setSignatureAlgo(string $signature_algo)
     {
         $this->signature_algo = $signature_algo;
-        return $this;
-    }
-
-    public function setBackRefUrl(string $backref_url)
-    {
-        $this->backref_url = $backref_url;
         return $this;
     }
     //endregion
@@ -176,23 +241,30 @@ class VictoriabankClient extends GuzzleClient
     //region Operations
     /**
      * Authorize payment
+     *
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     * @link   https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
      */
-    public function generateOrderAuthorizeRequest(string $order_id, float $amount, string $currency, string $description, string $merchant_name, string $merchant_url, string $merchant_address, string $email)
+    public function generateOrderAuthorizeRequest(string $order_id, float $amount, string $currency, string $description, string $email, string $backref_url, string $language = self::DEFAULT_LANGUAGE)
     {
         $authorize_data = [
             'AMOUNT' => (string) $amount,
             'CURRENCY' => $currency,
             'ORDER' => self::normalizeOrderId($order_id),
             'DESC' => $description,
-            'MERCH_NAME' => $merchant_name,
-            'MERCH_URL' => $merchant_url,
             'EMAIL' => $email,
-            'MERCH_ADDRESS' => $merchant_address,
+            'BACKREF' => $backref_url,
+            'LANG' => $language,
         ];
 
         return $this->generateAuthorizeRequest($authorize_data);
     }
 
+    /**
+     * Authorize payment
+     *
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     */
     public function generateAuthorizeRequest(array $authorize_data)
     {
         $args = $authorize_data;
@@ -200,8 +272,9 @@ class VictoriabankClient extends GuzzleClient
 
         $args['MERCH_GMT'] = $this->getTimezoneOffset();
         $args['MERCHANT'] = $this->merchant_id;
-        $args['BACKREF'] = $this->backref_url;
-        $args['LANG'] = $this->language;
+        $args['MERCH_NAME'] = $this->merchant_name;
+        $args['MERCH_URL'] = $this->merchant_url;
+        $args['MERCH_ADDRESS'] = $this->merchant_address;
         $args['COUNTRY'] = $this->country;
 
         $this->setTransactionParams($args);
@@ -229,7 +302,7 @@ class VictoriabankClient extends GuzzleClient
         return $this->complete($complete_data);
     }
 
-    public function complete(array $complete_data)
+    public function complete(array $complete_data): Result
     {
         $args = $complete_data;
         $args['TRTYPE'] = self::TRTYPE_SALES_COMPLETION;
@@ -258,7 +331,7 @@ class VictoriabankClient extends GuzzleClient
         return $this->reverse($reverse_data);
     }
 
-    public function reverse(array $reverse_data)
+    public function reverse(array $reverse_data): Result
     {
         $args = $reverse_data;
         $args['TRTYPE'] = self::TRTYPE_REVERSAL;
@@ -281,7 +354,7 @@ class VictoriabankClient extends GuzzleClient
         return $this->check($check_data);
     }
 
-    public function check(array $check_data)
+    public function check(array $check_data): Result
     {
         $args = $check_data;
         $args['TRTYPE'] = self::TRTYPE_CHECK;
@@ -391,6 +464,9 @@ class VictoriabankClient extends GuzzleClient
     //endregion
 
     //region Validation
+    /**
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     */
     protected function validateOperationArgsExecute(string $name, array $args)
     {
         $command = $this->getCommand($name, $args);
@@ -401,6 +477,9 @@ class VictoriabankClient extends GuzzleClient
         $this->execute($command);
     }
 
+    /**
+     * @throws \GuzzleHttp\Command\Exception\CommandException
+     */
     protected function validateOperationArgsValidator(string $name, array $args)
     {
         $description = $this->getDescription();
@@ -420,6 +499,9 @@ class VictoriabankClient extends GuzzleClient
         ]);
     }
 
+    /**
+     * @throws VictoriabankException
+     */
     protected function validateResponseModel(string $name, array $response)
     {
         $description = $this->getDescription();
@@ -434,7 +516,7 @@ class VictoriabankClient extends GuzzleClient
     }
 
     /**
-     * Validates bank response status and signature
+     * Validates bank transaction response and signature
      *
      * @throws VictoriabankException
      */
@@ -480,6 +562,9 @@ class VictoriabankClient extends GuzzleClient
     /**
      * Generates payment gateway request data P_SIGN signature.
      *
+     * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
+     * Appendix A: P_SIGN creation/verification in the Merchant System
+     *
      * @throws VictoriabankException
      */
     public function generateSignature(array $params)
@@ -512,6 +597,9 @@ class VictoriabankClient extends GuzzleClient
 
     /**
      * Validates payment gateway response data P_SIGN signature.
+     *
+     * Victoriabank e-Commerce Gateway merchant interface (CGI/WWW forms version)
+     * Appendix A: P_SIGN creation/verification in the Merchant System
      *
      * @throws VictoriabankException
      */
