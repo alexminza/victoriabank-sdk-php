@@ -14,7 +14,7 @@ use Composer\InstalledVersions;
  */
 class VictoriabankDescription extends Description
 {
-    private const PACKAGE_NAME = 'alexminza/victoriabank-sdk';
+    private const PACKAGE_NAME    = 'alexminza/victoriabank-sdk';
     private const DEFAULT_VERSION = 'dev';
 
     private static function detectVersion(): string
@@ -36,7 +36,7 @@ class VictoriabankDescription extends Description
         $version   = self::detectVersion();
         $userAgent = "victoriabank-sdk-php/$version";
 
-        //region Params
+        #region Params
         $orderParam = [
             'ORDER' => [
                 'type' => 'string',
@@ -231,7 +231,7 @@ class VictoriabankDescription extends Description
                 'maxLength' => 32,
             ],
         ];
-        //endregion
+        #endregion
 
         $orderValueParams  = array_merge($orderParam, $amountParams);
         $transactionParams = array_merge($terminalTrTypeParams, $transactionSignParams);
@@ -290,7 +290,7 @@ class VictoriabankDescription extends Description
             ],
 
             'models' => [
-                //region Generic Models
+                #region Generic Models
                 'getResponse' => [
                     'type' => 'object',
                     'additionalProperties' => [
@@ -307,9 +307,9 @@ class VictoriabankDescription extends Description
                         ]
                     ]
                 ],
-                //endregion
+                #endregion
 
-                //region Schema-based Models
+                #region Schema-based Models
                 'TransactionResponse' => [
                     'type' => 'object',
                     'additionalProperties' => [
@@ -405,7 +405,7 @@ class VictoriabankDescription extends Description
                         ],
                     ],
                 ],
-                //endregion
+                #endregion
             ],
         ];
 

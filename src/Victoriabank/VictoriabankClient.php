@@ -51,7 +51,7 @@ class VictoriabankClient extends GuzzleClient
     public const DEFAULT_COUNTRY  = 'md';
     public const DEFAULT_LANGUAGE = 'en';
 
-    //region Config
+    #region Config
     /**
      * @var string
      */
@@ -106,23 +106,19 @@ class VictoriabankClient extends GuzzleClient
      * @var \DateTimeZone
      */
     protected $timezone;
-    //endregion
+    #endregion
 
     public function __construct(?ClientInterface $client = null, ?DescriptionInterface $description = null, array $config = [])
     {
-        $client = $client ?? new Client();
+        $client      = $client ?? new Client();
         $description = $description ?? new VictoriabankDescription();
+
         parent::__construct($client, $description, null, null, null, $config);
 
-        $this->init();
-    }
-
-    protected function init()
-    {
         $this->timezone = new \DateTimeZone(date_default_timezone_get());
     }
 
-    //region Set config
+    #region Set config
     /**
      * Merchant ID assigned by bank
      */
@@ -202,7 +198,7 @@ class VictoriabankClient extends GuzzleClient
      */
     public function setMerchantPrivateKey(string $merchant_private_key, ?string $merchant_private_key_passphrase = null)
     {
-        $this->merchant_private_key = $merchant_private_key;
+        $this->merchant_private_key            = $merchant_private_key;
         $this->merchant_private_key_passphrase = $merchant_private_key_passphrase;
         return $this;
     }
@@ -236,9 +232,9 @@ class VictoriabankClient extends GuzzleClient
         $this->signature_algo = $signature_algo;
         return $this;
     }
-    //endregion
+    #endregion
 
-    //region Operations
+    #region Operations
     /**
      * Authorize payment
      *
@@ -248,7 +244,7 @@ class VictoriabankClient extends GuzzleClient
     public function generateOrderAuthorizeRequest(string $order_id, float $amount, string $currency, string $description, string $email, string $backref_url, string $language = self::DEFAULT_LANGUAGE)
     {
         $authorize_data = [
-            'AMOUNT' => (string) $amount,
+            'AMOUNT' => strval($amount),
             'CURRENCY' => $currency,
             'ORDER' => self::normalizeOrderId($order_id),
             'DESC' => $description,
@@ -267,20 +263,18 @@ class VictoriabankClient extends GuzzleClient
      */
     public function generateAuthorizeRequest(array $authorize_data)
     {
-        $args = $authorize_data;
-        $args['TRTYPE'] = self::TRTYPE_AUTHORIZATION;
+        $authorize_data['TRTYPE']        = self::TRTYPE_AUTHORIZATION;
+        $authorize_data['MERCH_GMT']     = $this->getTimezoneOffset();
+        $authorize_data['MERCHANT']      = $this->merchant_id;
+        $authorize_data['MERCH_NAME']    = $this->merchant_name;
+        $authorize_data['MERCH_URL']     = $this->merchant_url;
+        $authorize_data['MERCH_ADDRESS'] = $this->merchant_address;
+        $authorize_data['COUNTRY']       = $this->country;
 
-        $args['MERCH_GMT'] = $this->getTimezoneOffset();
-        $args['MERCHANT'] = $this->merchant_id;
-        $args['MERCH_NAME'] = $this->merchant_name;
-        $args['MERCH_URL'] = $this->merchant_url;
-        $args['MERCH_ADDRESS'] = $this->merchant_address;
-        $args['COUNTRY'] = $this->country;
+        $this->setTransactionParams($authorize_data);
+        $this->validateOperationArgsValidator('authorize', $authorize_data);
 
-        $this->setTransactionParams($args);
-        $this->validateOperationArgsValidator('authorize', $args);
-
-        return $args;
+        return $authorize_data;
     }
 
     /**
@@ -293,7 +287,7 @@ class VictoriabankClient extends GuzzleClient
     {
         $complete_data = [
             'ORDER' => self::normalizeOrderId($order_id),
-            'AMOUNT' => (string) $amount,
+            'AMOUNT' => strval($amount),
             'CURRENCY' => $currency,
             'RRN' => $rrn,
             'INT_REF' => $int_ref,
@@ -304,12 +298,10 @@ class VictoriabankClient extends GuzzleClient
 
     public function complete(array $complete_data): Result
     {
-        $args = $complete_data;
-        $args['TRTYPE'] = self::TRTYPE_SALES_COMPLETION;
+        $complete_data['TRTYPE'] = self::TRTYPE_SALES_COMPLETION;
 
-        $this->setTransactionParams($args);
-
-        return parent::complete($args);
+        $this->setTransactionParams($complete_data);
+        return parent::complete($complete_data);
     }
 
     /**
@@ -322,7 +314,7 @@ class VictoriabankClient extends GuzzleClient
     {
         $reverse_data = [
             'ORDER' => self::normalizeOrderId($order_id),
-            'AMOUNT' => (string) $amount,
+            'AMOUNT' => strval($amount),
             'CURRENCY' => $currency,
             'RRN' => $rrn,
             'INT_REF' => $int_ref,
@@ -333,12 +325,10 @@ class VictoriabankClient extends GuzzleClient
 
     public function reverse(array $reverse_data): Result
     {
-        $args = $reverse_data;
-        $args['TRTYPE'] = self::TRTYPE_REVERSAL;
+        $reverse_data['TRTYPE'] = self::TRTYPE_REVERSAL;
 
-        $this->setTransactionParams($args);
-
-        return parent::reverse($args);
+        $this->setTransactionParams($reverse_data);
+        return parent::reverse($reverse_data);
     }
 
     /**
@@ -356,22 +346,20 @@ class VictoriabankClient extends GuzzleClient
 
     public function check(array $check_data): Result
     {
-        $args = $check_data;
-        $args['TRTYPE'] = self::TRTYPE_CHECK;
-        $args['TERMINAL'] = $this->terminal_id;
+        $check_data['TRTYPE']   = self::TRTYPE_CHECK;
+        $check_data['TERMINAL'] = $this->terminal_id;
 
-        return parent::check($args);
+        return parent::check($check_data);
     }
-    //endregion
+    #endregion
 
-    //region Utility
+    #region Utility
     protected function setTransactionParams(array &$args)
     {
-        $args['TERMINAL'] = $this->terminal_id;
+        $args['TERMINAL']  = $this->terminal_id;
         $args['TIMESTAMP'] = self::getTimestamp();
-        $args['NONCE'] = self::generateNonce();
-
-        $args['P_SIGN'] = $this->generateSignature($args);
+        $args['NONCE']     = self::generateNonce();
+        $args['P_SIGN']    = $this->generateSignature($args);
     }
 
     /**
@@ -404,10 +392,10 @@ class VictoriabankClient extends GuzzleClient
         $now = new \DateTime('now', $this->timezone);
 
         // Get offset in seconds and convert to whole hours
-        $hours = $now->getOffset() / 3600;
+        $hours  = $now->getOffset() / 3600;
         $offset = ($hours >= 0)
             ? "+$hours"
-            : (string) $hours;
+            : strval($hours);
 
         return $offset;
     }
@@ -437,14 +425,15 @@ class VictoriabankClient extends GuzzleClient
             $form_id = uniqid('form-');
         }
 
-        $form_id_attr = htmlspecialchars($form_id, ENT_QUOTES);
+        $form_id_attr   = htmlspecialchars($form_id, ENT_QUOTES);
         $submit_id_attr = htmlspecialchars("$form_id-submit", ENT_QUOTES);
-        $action_attr = htmlspecialchars($action, ENT_QUOTES);
+        $action_attr    = htmlspecialchars($action, ENT_QUOTES);
 
         $html = "<form id=\"$form_id_attr\" name=\"$form_id_attr\" method=\"POST\" action=\"$action_attr\">\n";
         foreach ($args as $name => $value) {
-            $name_attr = htmlspecialchars($name, ENT_QUOTES);
+            $name_attr  = htmlspecialchars($name, ENT_QUOTES);
             $value_attr = htmlspecialchars($value, ENT_QUOTES);
+
             $html .= "\t<input type=\"hidden\" name=\"$name_attr\" value=\"$value_attr\" />\n";
         }
 
@@ -456,14 +445,15 @@ class VictoriabankClient extends GuzzleClient
 
         if ($auto_submit) {
             $js_form_id = json_encode($form_id);
+
             $html .= "<script type=\"text/javascript\">document.getElementById($js_form_id).submit();</script>\n";
         }
 
         return $html;
     }
-    //endregion
+    #endregion
 
-    //region Validation
+    #region Validation
     /**
      * @throws \GuzzleHttp\Command\Exception\CommandException
      */
@@ -483,8 +473,8 @@ class VictoriabankClient extends GuzzleClient
     protected function validateOperationArgsValidator(string $name, array $args)
     {
         $description = $this->getDescription();
-        $operation = $description->getOperation($name);
-        $command = $this->getCommand($name, $args);
+        $operation   = $description->getOperation($name);
+        $command     = $this->getCommand($name, $args);
 
         $validation_handler = new ValidatedDescriptionHandler($description);
         // $validator = $validation_handler(function () {});
@@ -505,10 +495,10 @@ class VictoriabankClient extends GuzzleClient
     protected function validateResponseModel(string $name, array $response)
     {
         $description = $this->getDescription();
-        $model = $description->getModel($name);
+        $model       = $description->getModel($name);
 
         $validator = new SchemaValidator();
-        $is_valid = $validator->validate($model, $response);
+        $is_valid  = $validator->validate($model, $response);
 
         if (!$is_valid) {
             throw new VictoriabankException('Validation errors: ' . implode("\n", $validator->getErrors()));
@@ -526,9 +516,9 @@ class VictoriabankClient extends GuzzleClient
 
         return $this->verifySignature($response_data);
     }
-    //endregion
+    #endregion
 
-    //region PSIGN
+    #region PSIGN
     protected const MERCHANT_PSIGN_PARAMS = ['ORDER', 'NONCE', 'TIMESTAMP', 'TRTYPE', 'AMOUNT'];
     protected const GATEWAY_PSIGN_PARAMS  = ['ACTION', 'RC', 'RRN', 'ORDER', 'AMOUNT'];
 
@@ -546,7 +536,7 @@ class VictoriabankClient extends GuzzleClient
 
         $mac = '';
         foreach ($psign_params as $key) {
-            $val = (string) ($params[$key] ?? '');
+            $val = strval($params[$key] ?? '');
 
             // Strict check for null/empty string to allow "0"
             if ($val === '') {
@@ -578,7 +568,7 @@ class VictoriabankClient extends GuzzleClient
         }
 
         try {
-            $signature = '';
+            $signature   = '';
             $sign_result = openssl_sign($mac, $signature, $private_key_resource, $this->signature_algo);
 
             if (!$sign_result) {
@@ -605,7 +595,7 @@ class VictoriabankClient extends GuzzleClient
      */
     public function verifySignature(array $params)
     {
-        $mac = self::generateMac($params, self::GATEWAY_PSIGN_PARAMS);
+        $mac           = self::generateMac($params, self::GATEWAY_PSIGN_PARAMS);
         $signature_bin = hex2bin($params['P_SIGN']);
 
         if ($signature_bin === false) {
@@ -634,5 +624,5 @@ class VictoriabankClient extends GuzzleClient
             }
         }
     }
-    //endregion
+    #endregion
 }
