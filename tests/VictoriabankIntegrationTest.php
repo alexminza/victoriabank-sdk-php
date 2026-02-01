@@ -199,6 +199,9 @@ class VictoriabankIntegrationTest extends TestCase
         file_put_contents(__DIR__ . '/testAuthorize.html', $html);
     }
 
+    /**
+     * @depends testAuthorize
+     */
     public function testAuthorizeModelValidation()
     {
         $authorize_data = self::$authorize_data;
@@ -321,6 +324,9 @@ class VictoriabankIntegrationTest extends TestCase
         $this->assertTrue($is_valid);
     }
 
+    /**
+     * @depends testAuthorize
+     */
     public function testValidateBadResponse()
     {
         try {
