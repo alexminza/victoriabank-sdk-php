@@ -451,6 +451,31 @@ class VictoriabankClient extends GuzzleClient
 
         return $html;
     }
+
+    public static function parseHtmlForm(string $response)
+    {
+        return self::parseResponseRegex($response, '/<input.+?name=["\'](\w+?)["\'].+?value=["\'](.*?)["\']/i');
+    }
+
+    public static function parseResponseRegex(string $response, string $regex)
+    {
+        $match_result = preg_match_all($regex, $response, $matches, PREG_SET_ORDER);
+        if (empty($match_result)) {
+            return null;
+        }
+
+        $data = [];
+        foreach ($matches as $match) {
+            if (count($match) === 3) {
+                $name  = trim($match[1]);
+                $value = trim($match[2]);
+
+                $data[$name] = $value;
+            }
+        }
+
+        return $data;
+    }
     #endregion
 
     #region Validation
