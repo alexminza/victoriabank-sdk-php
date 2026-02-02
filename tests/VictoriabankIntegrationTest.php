@@ -49,10 +49,11 @@ class VictoriabankIntegrationTest extends TestCase
         self::$terminal_id = getenv('VB_TERMINAL_ID');
 
         self::$merchant_private_key = getenv('VB_MERCHANT_PRIVATE_KEY');
-        self::$merchant_private_key_passphrase = getenv('VB_MERCHANT_PRIVATE_KEY_PASSPHRASE') ?: null;
         self::$merchant_public_key  = getenv('VB_MERCHANT_PUBLIC_KEY');
         self::$bank_public_key      = getenv('VB_BANK_PUBLIC_KEY');
         self::$signature_algo       = getenv('VB_SIGNATURE_ALGO');
+
+        self::$merchant_private_key_passphrase = getenv('VB_MERCHANT_PRIVATE_KEY_PASSPHRASE') ?: null;
 
         self::$merchant_name    = getenv('VB_MERCHANT_NAME');
         self::$merchant_url     = getenv('VB_MERCHANT_URL');
@@ -83,8 +84,8 @@ class VictoriabankIntegrationTest extends TestCase
         ];
 
         #region Logging
-        $classParts = explode('\\', self::class);
-        $logName = end($classParts) . '_guzzle';
+        $classParts  = explode('\\', self::class);
+        $logName     = end($classParts) . '_guzzle';
         $logFileName = "$logName.log";
 
         $log = new \Monolog\Logger($logName);
@@ -115,8 +116,8 @@ class VictoriabankIntegrationTest extends TestCase
         if ($this->isDebugMode()) {
             // https://github.com/guzzle/guzzle/issues/2185
             if ($t instanceof \GuzzleHttp\Command\Exception\CommandException) {
-                $response = $t->getResponse();
-                $responseBody = !empty($response) ? (string) $response->getBody() : '';
+                $response         = $t->getResponse();
+                $responseBody     = !empty($response) ? strval($response->getBody()) : '';
                 $exceptionMessage = $t->getMessage();
 
                 $this->debugLog($responseBody, $exceptionMessage);
@@ -138,36 +139,13 @@ class VictoriabankIntegrationTest extends TestCase
         error_log("$message: $data_print");
     }
 
-    protected static function parseResponseForm(string $html)
-    {
-        return self::parseResponseRegex($html, '/<input.+name="(\w+)".+value="(.*?)"/i');
-    }
-
-    protected static function parseResponseRegex(string $response, string $regex)
-    {
-        $match_result = preg_match_all($regex, $response, $matches, PREG_SET_ORDER);
-        if (empty($match_result)) {
-            return null;
-        }
-
-        $vbdata = [];
-        foreach ($matches as $match) {
-            if (count($match) === 3) {
-                $name = $match[1];
-                $value = $match[2];
-                $vbdata[$name] = $value;
-            }
-        }
-
-        return $vbdata;
-    }
-
     public function testAuthorize()
     {
         $order_id = '123';
-        $amount = 123.45;
+        $amount   = 123.45;
+
         self::$authorize_data = [
-            'AMOUNT' => (string) $amount,
+            'AMOUNT' => strval($amount),
             'CURRENCY' => 'MDL',
             'ORDER' => VictoriabankClient::normalizeOrderId($order_id),
             'DESC' => "Order #$order_id",
@@ -196,13 +174,19 @@ class VictoriabankIntegrationTest extends TestCase
         file_put_contents(__DIR__ . '/testAuthorize.html', $html);
     }
 
+    /**
+     * @depends testAuthorize
+     */
     public function testAuthorizeModelValidation()
     {
         $authorize_data = self::$authorize_data;
+
         $authorize_data['CURRENCY'] = 'MDLUSD';
 
         try {
             $this->expectException(\GuzzleHttp\Command\Exception\CommandException::class);
+            $this->expectExceptionMessage('[CURRENCY] length must be less than or equal to 3');
+
             $authorize_request = $this->client->generateAuthorizeRequest($authorize_data);
             $this->debugLog('generateAuthorizeRequest', $authorize_request);
         } catch(\Exception $ex) {
@@ -239,7 +223,7 @@ class VictoriabankIntegrationTest extends TestCase
         $html = $complete_response['body'];
         file_put_contents(__DIR__ . '/testComplete.html', $html);
 
-        $complete_response_data = $this->parseResponseForm($html);
+        $complete_response_data = VictoriabankClient::parseHtmlForm($html);
         $this->assertIsArray($complete_response_data);
         $this->assertNotEmpty($complete_response_data);
 
@@ -271,7 +255,7 @@ class VictoriabankIntegrationTest extends TestCase
         $html = $reverse_response['body'];
         file_put_contents(__DIR__ . '/testReverse.html', $html);
 
-        $reverse_response_data = $this->parseResponseForm($html);
+        $reverse_response_data = VictoriabankClient::parseHtmlForm($html);
         $this->assertIsArray($reverse_response_data);
         $this->assertNotEmpty($reverse_response_data);
 
@@ -313,9 +297,17 @@ class VictoriabankIntegrationTest extends TestCase
         $this->debugLog('validateResponse', $is_valid);
 
         $this->assertTrue($is_valid);
+    }
 
+    /**
+     * @depends testAuthorize
+     */
+    public function testValidateBadResponse()
+    {
         try {
             $this->expectException(VictoriabankException::class);
+            $this->expectExceptionMessage('[ACTION] is a required string');
+
             $is_valid = $this->client->validateResponse(self::$authorize_data);
             $this->debugLog('validateResponse', $is_valid);
 
